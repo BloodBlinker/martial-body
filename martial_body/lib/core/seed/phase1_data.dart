@@ -126,7 +126,6 @@ const _monWarmupExercises = [
     reps: '20s/foot',
     tempo: 'Static',
     notes: 'Arch activation before any loading',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _reverseHeelTap,
@@ -135,7 +134,6 @@ const _monWarmupExercises = [
     reps: '15',
     tempo: 'Controlled',
     notes: 'Tib anterior + ankle proprioception',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _tibialisRaise,
@@ -144,7 +142,6 @@ const _monWarmupExercises = [
     reps: '25',
     tempo: '2-1-2-0',
     notes: 'Shin armor — do against wall',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _catCow,
@@ -204,7 +201,6 @@ const _monMainExercises = [
     reps: '15',
     tempo: '2-1-2-1',
     notes: 'Light load. Terminal knee extension focus',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _seatedAdductor,
@@ -213,7 +209,6 @@ const _monMainExercises = [
     reps: '15',
     tempo: '2-1-1-0',
     notes: 'Groin injury prevention',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _singleLegCalfRaise,
@@ -241,7 +236,6 @@ const _monTendonExercises = [
     reps: '15',
     tempo: '1-1-1-1',
     notes: 'Intrinsic arch strength',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _toeCurls,
@@ -250,7 +244,6 @@ const _monTendonExercises = [
     reps: '10',
     tempo: '1-1-1-1',
     notes: 'Plantar fascia protection',
-    isNew: true,
   ),
 ];
 
@@ -317,7 +310,6 @@ const _tueWarmupExercises = [
     reps: '10 (5s hold)',
     tempo: 'Controlled',
     notes: 'Deep cervical flexors — protect C-spine',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _jawOpener,
@@ -326,7 +318,6 @@ const _tueWarmupExercises = [
     reps: '15',
     tempo: 'Slow',
     notes: 'TMJ decompression',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _serratusWallSlides,
@@ -343,7 +334,6 @@ const _tueWarmupExercises = [
     reps: '10s each direction',
     tempo: 'Static',
     notes: 'Front / back / left / right',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _bandPullAparts,
@@ -371,7 +361,6 @@ const _tueMainExercises = [
     reps: '10/arm',
     tempo: '2-1-1-0',
     notes: 'Unilateral. Weak arm first. Expose gap now.',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _dbFloorPress,
@@ -388,7 +377,6 @@ const _tueMainExercises = [
     reps: '20–30s',
     tempo: 'Static',
     notes: 'Mid-range hold — tendon adaptation',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _cableWoodchoppers,
@@ -424,7 +412,6 @@ const _tueTendonNeckExercises = [
     reps: '15',
     tempo: 'Controlled',
     notes: 'Front of neck. Very light load.',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _neckExtension,
@@ -433,7 +420,6 @@ const _tueTendonNeckExercises = [
     reps: '15',
     tempo: 'Controlled',
     notes: 'Back of neck. Controlled through full ROM.',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _bandLateralNeckHolds,
@@ -508,7 +494,6 @@ const _wedWarmupExercises = [
     reps: '8/side (5s hold)',
     tempo: 'Controlled',
     notes: 'Lumbar stability — do not rotate hips',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _pelvicFloorDrawIn,
@@ -517,7 +502,6 @@ const _wedWarmupExercises = [
     reps: '10 (5s hold)',
     tempo: 'Static',
     notes: 'Breathe in, draw navel up, hold',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _proneCobra,
@@ -553,7 +537,6 @@ const _wedPosteriorExercises = [
     reps: '8–10',
     tempo: '3-1-1-1',
     notes: 'Hip hinge focus. Soft knee. Feel hamstring stretch.',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _nordicCurl,
@@ -562,7 +545,6 @@ const _wedPosteriorExercises = [
     reps: '4–6',
     tempo: '4-0-1-0',
     notes: 'Lower slowly. Use band assist if needed in wk 1–2.',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _isoGluteBridge,
@@ -571,7 +553,6 @@ const _wedPosteriorExercises = [
     reps: '45s',
     tempo: 'Static',
     notes: 'Drive through heels. Full glute squeeze.',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _pallofPress,
@@ -650,7 +631,6 @@ const _thuWarmupExercises = [
     reps: '2 min',
     tempo: 'Slow',
     notes: 'All 5 finger positions — full range',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _bandFingerExtensions,
@@ -659,7 +639,6 @@ const _thuWarmupExercises = [
     reps: '20',
     tempo: 'Controlled',
     notes: 'Counter-balance pulling muscles',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _deadHangPassive,
@@ -738,7 +717,6 @@ const _thuGripExercises = [
     reps: 'Max time',
     tempo: 'Static',
     notes: 'Goal: 30–60s. Build each week.',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _towelHang,
@@ -755,7 +733,6 @@ const _thuGripExercises = [
     reps: '12',
     tempo: '2-0-2-0',
     notes: 'Light DB — wrist stability',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _dbSupination,
@@ -764,7 +741,6 @@ const _thuGripExercises = [
     reps: '12',
     tempo: '2-0-2-0',
     notes: 'Supinator + biceps tendon health',
-    isNew: true,
   ),
 ];
 
@@ -830,7 +806,6 @@ const _friWarmupExercises = [
     reps: '15/side',
     tempo: '2-1-1-0',
     notes: 'Glute med — hip stability base',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _seatedHipIRER,
@@ -839,7 +814,6 @@ const _friWarmupExercises = [
     reps: '15 each way',
     tempo: 'Slow',
     notes: 'Hip capsule mobility — kicks & takedowns',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _pubicCrunch,
@@ -848,7 +822,6 @@ const _friWarmupExercises = [
     reps: '10',
     tempo: '2-1-2-1',
     notes: 'Lower abdominal + pelvic floor integration',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _armCirclesShadow,
@@ -884,7 +857,6 @@ const _friMainExercises = [
     reps: '10/arm',
     tempo: '2-1-1-1',
     notes: 'Unilateral — expose shoulder asymmetry',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _dbHammerCurls,
@@ -928,7 +900,6 @@ const _friCoreExercises = [
     reps: '30s',
     tempo: 'Static',
     notes: 'Expand in all directions. No breath-holding.',
-    isNew: true,
   ),
   BlockExerciseModel(
     exercise: _abWheel,

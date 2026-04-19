@@ -6,6 +6,8 @@ import '../models/phase_model.dart';
 import '../models/session_model.dart';
 import 'phase1_data.dart';
 import 'phase2_data.dart';
+import 'phase3_data.dart';
+import 'phase4_data.dart';
 
 /// Seeds the program structure (phases, sessions, blocks, exercises) for every
 /// phase that has content authored. User state (program start date) is managed
@@ -22,6 +24,8 @@ class Seeder {
   Future<void> seedIfEmpty() async {
     await _seedPhaseIfMissing(phase1, phase1Sessions);
     await _seedPhaseIfMissing(phase2, phase2Sessions);
+    await _seedPhaseIfMissing(phase3, phase3Sessions);
+    await _seedPhaseIfMissing(phase4, phase4Sessions);
   }
 
   Future<void> _seedPhaseIfMissing(

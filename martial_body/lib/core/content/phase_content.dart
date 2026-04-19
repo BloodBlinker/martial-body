@@ -47,7 +47,7 @@ const kPhaseContent = <int, PhaseContentSpec>{
   2: PhaseContentSpec(
     phaseNumber: 2,
     workoutAvailable: true,
-    mealPlanAvailable: false,
+    mealPlanAvailable: true,
     workoutBlurb: 'Heavier compound strength, tempo intervals, and engine '
         'building across six weeks.',
     mealPlanBlurb: 'Higher-carb fuelling around training with a steady daily '
@@ -55,8 +55,8 @@ const kPhaseContent = <int, PhaseContentSpec>{
   ),
   3: PhaseContentSpec(
     phaseNumber: 3,
-    workoutAvailable: false,
-    mealPlanAvailable: false,
+    workoutAvailable: true,
+    mealPlanAvailable: true,
     workoutBlurb: 'Combat-specific strength, power, sprints, and grip work '
         'across eight weeks.',
     mealPlanBlurb: 'Performance-optimized fuelling for high-intensity combat '
@@ -64,10 +64,10 @@ const kPhaseContent = <int, PhaseContentSpec>{
   ),
   4: PhaseContentSpec(
     phaseNumber: 4,
-    workoutAvailable: false,
-    mealPlanAvailable: false,
-    workoutBlurb: 'Peak MMA-specific work, sparring integration, and a taper '
-        'into readiness.',
+    workoutAvailable: true,
+    mealPlanAvailable: true,
+    workoutBlurb: 'Four-day taper into MMA readiness: −30% lifting volume, '
+        'conditioning maintained, shadowboxing added.',
     mealPlanBlurb: 'Fight-week nutrition strategy, hydration, and weight-'
         'management guidelines.',
   ),
