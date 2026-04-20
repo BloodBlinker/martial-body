@@ -2,6 +2,8 @@
 
 **A 24-week MMA preparation programme — fully offline, no accounts, no cloud.**
 
+[![Get it on F-Droid](https://fdroid.gitlab.io/badge/get-it-on.png)](https://f-droid.org/packages/com.robinroy.martial_body/)
+
 Martial Body is a free and open-source Android app that guides a complete beginner through a structured 24-week training programme designed to get them physically ready to walk into their first MMA class. It is **not** a generic fitness app — there is one fixed programme, one path, and one goal.
 
 The entire programme lives on-device in a local SQLite database. No internet connection is required after installation. No telemetry, no analytics, no ads.
