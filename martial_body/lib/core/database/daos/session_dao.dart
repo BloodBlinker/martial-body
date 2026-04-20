@@ -3,7 +3,7 @@ import '../database.dart';
 
 part 'session_dao.g.dart';
 
-@DriftAccessor(tables: [WorkoutLogs, SetLogs])
+@DriftAccessor(tables: [WorkoutLogs, SetLogs, BlockExercises])
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   SessionDao(super.db);
 
@@ -114,6 +114,51 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
             ..orderBy([(w) => OrderingTerm.desc(w.date)]))
           .watch();
 
+  /// One-shot fetch — analytics is a FutureProvider and should not hold a
+  /// stream subscription open just to grab the current list.
+  Future<List<WorkoutLog>> getAllLogs() =>
+      (select(workoutLogs)
+            ..orderBy([(w) => OrderingTerm.desc(w.date)]))
+          .get();
+
   Future<List<WorkoutLog>> getLogsForWeek(int weekNumber) =>
       (select(workoutLogs)..where((w) => w.weekNumber.equals(weekNumber))).get();
+
+  /// Returns the most recent completed SetLog for each of [exerciseIds],
+  /// optionally excluding one workoutLog (the current session) so the "last
+  /// time" hint is truly *prior*. Map is keyed by exerciseId.
+  ///
+  /// One query → in-memory fold. Good enough for the ~30 distinct exercises
+  /// per session.
+  Future<Map<int, SetLog>> getLastCompletedSetLogByExerciseId(
+    List<int> exerciseIds, {
+    int? excludeWorkoutLogId,
+  }) async {
+    if (exerciseIds.isEmpty) return {};
+
+    final query = select(setLogs).join([
+      innerJoin(
+        blockExercises,
+        blockExercises.id.equalsExp(setLogs.blockExerciseId),
+      ),
+    ])
+      ..where(
+        setLogs.completed.equals(true) &
+            blockExercises.exerciseId.isIn(exerciseIds) &
+            (excludeWorkoutLogId != null
+                ? setLogs.workoutLogId.equals(excludeWorkoutLogId).not()
+                : const Constant(true)),
+      )
+      ..orderBy([OrderingTerm.desc(setLogs.completedAt)]);
+
+    final rows = await query.get();
+    final Map<int, SetLog> out = {};
+    for (final row in rows) {
+      final be = row.readTable(blockExercises);
+      if (!out.containsKey(be.exerciseId)) {
+        out[be.exerciseId] = row.readTable(setLogs);
+      }
+    }
+    return out;
+  }
 }

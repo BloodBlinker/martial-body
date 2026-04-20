@@ -1,4 +1,5 @@
 import '../database/database.dart';
+import '../program/phase_math.dart';
 
 class HomeViewModel {
   final int weekNumber;
@@ -6,7 +7,7 @@ class HomeViewModel {
   final bool isDeload;
   final Session? todaySession;
   final List<Session> allPhaseSessions;
-  final Set<int> completedSessionIds; // session IDs logged (any status) this week
+  final Set<int> completedSessionIds; // session IDs with a completed log this week
   final int completedThisWeek;
   final int totalCompletedSessions;
   final DateTime programStartDate;
@@ -25,20 +26,9 @@ class HomeViewModel {
 
   bool get isRestDay => todaySession == null;
 
-  String get phaseName {
-    switch (phaseNumber) {
-      case 1:
-        return 'Foundation';
-      case 2:
-        return 'Build';
-      case 3:
-        return 'Peak';
-      case 4:
-        return 'Fight Prep';
-      default:
-        return 'Phase $phaseNumber';
-    }
-  }
+  // Delegates to phase_math so Home, Program, and Progress never disagree
+  // on a phase's canonical name.
+  String get phaseName => phaseForWeek(weekNumber).name;
 
   bool isSessionDone(int sessionId) => completedSessionIds.contains(sessionId);
 }

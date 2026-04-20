@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/database/database.dart';
+import '../../core/export/csv_exporter.dart';
 import '../../core/models/health_metrics.dart';
 import '../../core/providers/database_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/theme/app_colors.dart';
+
+/// Public URL of the hosted privacy policy — shown on the Profile tab and
+/// referenced from Play Console. Update to the real GitHub Pages URL when
+/// published.
+const String kPrivacyPolicyUrl =
+    'https://bloodblinker.github.io/martial-body/privacy.html';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -271,6 +280,28 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                             : const Text('Save Profile',
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
+                    const SizedBox(height: 28),
+                    _SectionLabel('DATA & PRIVACY'),
+                    const SizedBox(height: 12),
+                    _InputCard(children: [
+                      _ActionRow(
+                        icon: Icons.download,
+                        label: 'Export workout log (CSV)',
+                        onTap: _exportCsv,
+                      ),
+                      _divider(),
+                      _ActionRow(
+                        icon: Icons.event,
+                        label: 'Shift program start date',
+                        onTap: _shiftStartDate,
+                      ),
+                      _divider(),
+                      _ActionRow(
+                        icon: Icons.privacy_tip_outlined,
+                        label: 'Privacy policy',
+                        onTap: _openPrivacyPolicy,
+                      ),
+                    ]),
                     const SizedBox(height: 24),
                     Center(
                       child: Text(
@@ -290,6 +321,83 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
         ),
       ),
     );
+  }
+
+  Future<void> _exportCsv() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final path =
+          await CsvExporter(ref.read(databaseProvider)).exportAll();
+      await Share.shareXFiles(
+        [XFile(path, mimeType: 'text/csv', name: 'martial_body_log.csv')],
+        text: 'Martial Body workout log',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
+    }
+  }
+
+  Future<void> _shiftStartDate() async {
+    final db = ref.read(databaseProvider);
+    final current = (await db.userDao.getUserState())?.programStartDate ??
+        DateTime.now();
+    if (!mounted) return;
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current,
+      // A program start can only have been in the past. Cap "future" to
+      // today so users don't accidentally set week 1 to next month.
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now,
+    );
+    if (picked == null || !mounted) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Shift start date?',
+            style: TextStyle(color: AppColors.textPrimary)),
+        content: Text(
+          'This will recompute the current week (and phase) from '
+          '${picked.toIso8601String().split('T').first}. Existing workout '
+          'logs keep their original week numbers.',
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.gold),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await db.userDao.updateProgramStartDate(picked);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Start date updated')),
+    );
+  }
+
+  Future<void> _openPrivacyPolicy() async {
+    final ok = await launchUrl(
+      Uri.parse(kPrivacyPolicyUrl),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open privacy policy')),
+      );
+    }
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -324,6 +432,41 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
 }
 
 // ---------------------------------------------------------------------------
+
+class _ActionRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ActionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.textSecondary, size: 20),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+            ),
+            const Icon(Icons.chevron_right,
+                color: AppColors.textSecondary, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _SectionLabel extends StatelessWidget {
   final String text;

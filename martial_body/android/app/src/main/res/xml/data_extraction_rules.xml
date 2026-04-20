@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ data-transfer rules. We opt out of both cloud backups and
+  device-to-device transfer because (a) the app is a health / body-composition
+  tracker and the user's logged weights shouldn't leave their device without
+  explicit action via the Profile → Export CSV flow, and (b) there is no
+  server-side restore path, so a restored install would be non-functional
+  until the user starts the program fresh anyway.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

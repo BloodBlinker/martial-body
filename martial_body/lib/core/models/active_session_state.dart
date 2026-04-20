@@ -1,3 +1,4 @@
+import '../database/database.dart';
 import 'session_detail.dart';
 
 class ActiveSessionState {
@@ -9,6 +10,11 @@ class ActiveSessionState {
   final Map<String, String> weightDrafts;
   final Map<String, String> repsDrafts;
 
+  /// Last prior completed SetLog per exerciseId. Used to render the
+  /// "Last: 60kg × 8" hint on set rows so the user can easily repeat or
+  /// progressively overload.
+  final Map<int, SetLog> lastByExerciseId;
+
   const ActiveSessionState({
     required this.workoutLogId,
     required this.sessionDetail,
@@ -17,6 +23,7 @@ class ActiveSessionState {
     this.setsDone = const {},
     this.weightDrafts = const {},
     this.repsDrafts = const {},
+    this.lastByExerciseId = const {},
   });
 
   static String key(int beId, int setNum) => '${beId}_$setNum';
@@ -51,6 +58,7 @@ class ActiveSessionState {
     Map<String, bool>? setsDone,
     Map<String, String>? weightDrafts,
     Map<String, String>? repsDrafts,
+    Map<int, SetLog>? lastByExerciseId,
   }) {
     return ActiveSessionState(
       workoutLogId: workoutLogId,
@@ -60,6 +68,7 @@ class ActiveSessionState {
       setsDone: setsDone ?? this.setsDone,
       weightDrafts: weightDrafts ?? this.weightDrafts,
       repsDrafts: repsDrafts ?? this.repsDrafts,
+      lastByExerciseId: lastByExerciseId ?? this.lastByExerciseId,
     );
   }
 }

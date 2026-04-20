@@ -1,0 +1,9 @@
+# Copy to android/key.properties (same directory, NOT committed) and fill in.
+# Generate the keystore with:
+#   keytool -genkey -v -keystore ~/martial-body-upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias martial-body
+# Then point storeFile at the absolute path of the .jks file.
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=martial-body
+storeFile=/absolute/path/to/martial-body-upload.jks

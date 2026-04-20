@@ -14,7 +14,7 @@ final analyticsProvider = FutureProvider<List<WeeklyStats>>((ref) async {
 });
 
 Future<List<WeeklyStats>> _buildWeeklyStats(AppDatabase db) async {
-  final allLogs = await db.sessionDao.watchAllLogs().first;
+  final allLogs = await db.sessionDao.getAllLogs();
   if (allLogs.isEmpty) return [];
 
   final completedLogs = allLogs.where((l) => l.completed).toList();

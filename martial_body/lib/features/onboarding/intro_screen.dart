@@ -17,9 +17,15 @@ class IntroScreen extends ConsumerStatefulWidget {
 
 class _IntroScreenState extends ConsumerState<IntroScreen> {
   bool _starting = false;
+  bool _acknowledged = false;
 
   Future<void> _onStart() async {
     if (_starting) return;
+    if (!_acknowledged) {
+      final ok = await _showDisclaimer();
+      if (ok != true) return;
+      setState(() => _acknowledged = true);
+    }
     setState(() => _starting = true);
     try {
       final db = ref.read(databaseProvider);
@@ -33,6 +39,93 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
         SnackBar(content: Text('Could not start: $e')),
       );
     }
+  }
+
+  Future<bool?> _showDisclaimer() {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        bool checked = false;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: const Text(
+              'Before you start',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'This 24-week program is a general fitness guide, not '
+                    'medical advice. High-intensity training and combat-sport '
+                    'preparation carry real injury risk.\n\n'
+                    'Before beginning:\n'
+                    '  • Consult a qualified physician if you have any '
+                    'cardiovascular, orthopaedic, metabolic, or other '
+                    'medical condition.\n'
+                    '  • Stop immediately and seek care if you experience '
+                    'chest pain, dizziness, joint pain, or any unusual '
+                    'symptom.\n'
+                    '  • Load, reps, and technique are ultimately your '
+                    'responsibility — scale movements to your ability and '
+                    'prioritise form over weight.\n\n'
+                    'By continuing you acknowledge you train at your own '
+                    'risk. The developer accepts no liability for injury or '
+                    'loss arising from use of this app.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () => setDialogState(() => checked = !checked),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: checked,
+                          onChanged: (v) =>
+                              setDialogState(() => checked = v ?? false),
+                          activeColor: AppColors.gold,
+                        ),
+                        const Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 12),
+                            child: Text(
+                              'I have read and understand the above. I am '
+                              'medically cleared to train and accept full '
+                              'responsibility for my participation.',
+                              style: TextStyle(color: AppColors.textPrimary),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: checked ? () => Navigator.of(ctx).pop(true) : null,
+                style:
+                    TextButton.styleFrom(foregroundColor: AppColors.gold),
+                child: const Text('Begin program'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override

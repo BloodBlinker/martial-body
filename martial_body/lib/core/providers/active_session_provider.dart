@@ -80,6 +80,15 @@ class ActiveSessionNotifier extends StateNotifier<AsyncValue<ActiveSessionState>
         }
       }
 
+      // Preload "last time" hints — one query per session, not per exercise.
+      final exerciseIds =
+          allExercises.map((e) => e.exercise.id).toSet().toList();
+      final lastByExerciseId =
+          await _db.sessionDao.getLastCompletedSetLogByExerciseId(
+        exerciseIds,
+        excludeWorkoutLogId: workoutLogId,
+      );
+
       state = AsyncValue.data(ActiveSessionState(
         workoutLogId: workoutLogId,
         sessionDetail: sessionDetail,
@@ -88,6 +97,7 @@ class ActiveSessionNotifier extends StateNotifier<AsyncValue<ActiveSessionState>
         setsDone: setsDone,
         weightDrafts: weightDrafts,
         repsDrafts: repsDrafts,
+        lastByExerciseId: lastByExerciseId,
       ));
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -107,14 +117,17 @@ class ActiveSessionNotifier extends StateNotifier<AsyncValue<ActiveSessionState>
   /// On toggle-OFF: only flip the completed flag and clear completedAt — do
   /// NOT overwrite weight/reps, so tapping the check to uncomplete never loses
   /// values the user entered earlier.
-  Future<void> toggleSet({
+  ///
+  /// Returns the new done-state so callers can trigger side effects (e.g.
+  /// start the rest countdown only on toggle-ON).
+  Future<bool> toggleSet({
     required int beId,
     required int setNumber,
     required String weightText,
     required String repsText,
   }) async {
     final current = state.value;
-    if (current == null) return;
+    if (current == null) return false;
 
     final k = ActiveSessionState.key(beId, setNumber);
     final newDone = !(current.setsDone[k] ?? false);
@@ -149,6 +162,7 @@ class ActiveSessionNotifier extends StateNotifier<AsyncValue<ActiveSessionState>
         setsDone: {...current.setsDone, k: false},
       ));
     }
+    return newDone;
   }
 
   /// Persist any non-empty, uncompleted draft as a completed set. Used when
