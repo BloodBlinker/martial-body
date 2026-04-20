@@ -17,11 +17,11 @@
 
 <p align="center">
   <a href="https://f-droid.org/packages/com.robinroy.martial_body/">
-    <img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="60" />
+    <img src="https://img.shields.io/badge/F--Droid-Get_it_on-0A3C8B?style=for-the-badge&logo=f-droid&logoColor=white" alt="Get it on F-Droid" />
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/BloodBlinker/martial-body/releases">
-    <img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android" alt="Download APK" height="60" />
+    <img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android" alt="Download APK" />
   </a>
 </p>
 
