@@ -1,48 +1,116 @@
-# Martial Body
+<p align="center">
+  <img src="martial_body/assets/icon/app_icon.png" width="120" alt="Martial Body icon" />
+</p>
 
-**A 24-week MMA preparation programme — fully offline, no accounts, no cloud.**
+<h1 align="center">Martial Body</h1>
 
-[![Get it on F-Droid](https://f-droid.org/badge/get-it-on.png)](https://f-droid.org/packages/com.robinroy.martial_body/)
+<p align="center">
+  <strong>A 24-week MMA preparation programme — fully offline, no accounts, no cloud.</strong>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="License: GPL-3.0-or-later" /></a>
+  <img src="https://img.shields.io/badge/platform-Android-green.svg" alt="Platform: Android" />
+  <img src="https://img.shields.io/badge/min%20SDK-31%20(Android%2012)-brightgreen.svg" alt="Min SDK: 31" />
+  <a href="https://f-droid.org/packages/com.robinroy.martial_body/"><img src="https://img.shields.io/f-droid/v/com.robinroy.martial_body.svg" alt="F-Droid" /></a>
+  <a href="https://github.com/BloodBlinker/martial-body/releases"><img src="https://img.shields.io/github/v/release/BloodBlinker/martial-body" alt="GitHub Release" /></a>
+  <img src="https://img.shields.io/badge/built%20with-Flutter-02569B.svg?logo=flutter" alt="Built with Flutter" />
+</p>
+
+<p align="center">
+  <a href="https://f-droid.org/packages/com.robinroy.martial_body/">
+    <img src="https://f-droid.org/badge/get-it-on.png" height="80" alt="Get it on F-Droid" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/BloodBlinker/martial-body/releases">
+    <img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android" height="34" alt="Download APK" />
+  </a>
+</p>
+
+---
 
 Martial Body is a free and open-source Android app that guides a complete beginner through a structured 24-week training programme designed to get them physically ready to walk into their first MMA class. It is **not** a generic fitness app — there is one fixed programme, one path, and one goal.
 
-The entire programme lives on-device in a local SQLite database. No internet connection is required after installation. No telemetry, no analytics, no ads.
+The entire programme lives on-device in a local SQLite database. No internet connection is required after installation. **No telemetry, no analytics, no ads.**
 
-> **License:** [GNU GPL-3.0-or-later](LICENSE)
+---
+
+## Table of Contents
+
+- [Why Martial Body?](#why-martial-body)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Install (APK)](#install-apk)
+- [Build from source](#build-from-source)
+- [Architecture overview](#architecture-overview)
+- [Project structure](#project-structure)
+- [Tech stack](#tech-stack)
+- [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+
+---
+
+## Why Martial Body?
+
+Most fitness apps dump you into a generic exercise library and tell you to figure it out. If you're a complete beginner who wants to prepare for MMA, that's useless — you don't know what you don't know.
+
+Martial Body takes a different approach:
+
+🎯 **One programme, one goal** — every session is mapped out for you, from Foundation to MMA Transition.  
+📅 **24 weeks, 4 phases** — progressive overload with automatic deload weeks baked in.  
+🔒 **Your data stays yours** — zero network calls, zero permissions, zero tracking.  
+🥊 **Built for day one** — you don't need to be fit to start; the programme meets you where you are.
+
+This app exists because the developer needed it and it didn't exist. It's opinionated by design.
 
 ---
 
 ## Features
 
-- **4-phase progressive programme** — Foundation → Engine Build → Full Combat → MMA Transition
-- **Guided active sessions** — step-by-step walkthrough of every exercise, set, rep, and rest period
-- **Automatic deload weeks** — volume reduced 40-50 % on weeks 4, 10, 16, and 20
-- **Interval timer** — built-in work/rest timer for conditioning blocks and sprint intervals
-- **Phase 4 taper & shadowboxing** — progressive volume reduction with shadowboxing integration
-- **Left-shoulder safety protocol** — contextual warnings during pressing movements
-- **Progress tracking** — session history, weekly completion, phase progress, and streak tracking
-- **Progress charts** — visual analytics powered by fl_chart
-- **Profile & health metrics** — BMI, BMR, Devine ideal weight, Deurenberg body fat estimates
-- **CSV export** — export your workout history via the share sheet
-- **Phase-specific meal plans** — reference nutrition guidelines for each training phase
-- **Fully offline** — zero network calls, zero permissions beyond storage
-- **Dark theme** — single cohesive dark UI throughout
-- **No accounts, no cloud sync, no ads, no tracking**
+| | Feature | Details |
+|---|---|---|
+| 🏋️ | **4-phase progressive programme** | Foundation → Engine Build → Full Combat → MMA Transition |
+| 📋 | **Guided active sessions** | Step-by-step walkthrough of every exercise, set, rep, and rest period |
+| 📉 | **Automatic deload weeks** | Volume reduced 40–50 % on weeks 4, 10, 16, and 20 |
+| ⏱️ | **Interval timer** | Built-in work/rest timer for conditioning blocks and sprint intervals |
+| 🥊 | **Phase 4 taper & shadowboxing** | Progressive volume reduction with shadowboxing integration |
+| 🛡️ | **Left-shoulder safety protocol** | Contextual warnings during pressing movements |
+| 📊 | **Progress tracking** | Session history, weekly completion, phase progress, and streak tracking |
+| 📈 | **Progress charts** | Visual analytics powered by fl_chart |
+| ❤️ | **Profile & health metrics** | BMI, BMR, Devine ideal weight, Deurenberg body fat estimates |
+| 📤 | **CSV export** | Export your workout history via the share sheet |
+| 🍽️ | **Phase-specific meal plans** | Reference nutrition guidelines for each training phase |
+| ✈️ | **Fully offline** | Zero network calls, zero permissions beyond storage |
+| 🌙 | **Dark theme** | Single cohesive dark UI throughout |
+| 🚫 | **No accounts, no cloud sync, no ads, no tracking** | |
 
 ---
 
 ## Screenshots
 
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpeg" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpeg" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg" width="200" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpeg" width="200" alt="Profile & health metrics" />
+  &nbsp;
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpeg" width="200" alt="Week 1 session walkthrough" />
+  &nbsp;
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg" width="200" alt="Programme overview" />
 </p>
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpeg" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/7.jpeg" width="200" />
+  <em>Profile & health metrics • Guided session walkthrough • Programme overview</em>
+</p>
+
+<br />
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg" width="200" alt="Phase 3 Full Combat" />
+  &nbsp;
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpeg" width="200" alt="Phase 4 MMA Transition" />
+  &nbsp;
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg" width="200" alt="Progress analytics" />
+</p>
+<p align="center">
+  <em>Full Combat phase • MMA Transition phase • Progress analytics</em>
 </p>
 
 ---
@@ -108,6 +176,49 @@ flutter test
 ```
 
 Tests cover health-metric calculations, phase-boundary logic, and DAO round-trips.
+
+---
+
+## Architecture overview
+
+```mermaid
+flowchart TD
+    subgraph UI["UI Layer (Features)"]
+        A[Home / Meal Plans]
+        B[Session Runner]
+        C[Progress / Charts]
+        D[Programme Calendar]
+        E[Profile / Metrics]
+        F[Onboarding]
+    end
+
+    subgraph State["State Layer"]
+        G[Riverpod Providers]
+    end
+
+    subgraph Core["Core Layer"]
+        H[Phase Math]
+        I[Health Metrics]
+        J[CSV Export]
+        K[Seed Data]
+        L[Meal Plans]
+    end
+
+    subgraph Data["Data Layer"]
+        M[(Drift / SQLite)]
+    end
+
+    UI --> State
+    State --> Core
+    Core --> Data
+```
+
+**Key design decisions:**
+
+- **Offline-first** — all data lives in a single SQLite database via [Drift](https://pub.dev/packages/drift). No network layer exists.
+- **Unidirectional data flow** — UI reads state from Riverpod providers; writes go through DAOs.
+- **Deterministic programme** — phase/week mapping is pure math (`phase_math.dart`), not configuration.
+- **Seeder pattern** — the full 24-week programme is seeded into the database on first launch from static Dart data.
 
 ---
 
@@ -190,6 +301,16 @@ Open an issue on [GitHub Issues](https://github.com/BloodBlinker/martial-body/is
 - Device model and Android version
 - Steps to reproduce
 - Expected vs. actual behaviour
+
+---
+
+## Acknowledgements
+
+- The [Flutter](https://flutter.dev) team for the framework and tooling.
+- [Simon Binder](https://github.com/simolus3) for [Drift](https://pub.dev/packages/drift) — the reactive SQLite layer that powers the entire app.
+- [Remi Rousselet](https://github.com/rrousselGit) for [Riverpod](https://pub.dev/packages/flutter_riverpod) — clean, testable state management.
+- [imaN Mahdi](https://github.com/imaNNeo) for [fl_chart](https://pub.dev/packages/fl_chart) — the charting library behind the progress analytics.
+- The [F-Droid](https://f-droid.org) project for championing libre software distribution on Android.
 
 ---
 
