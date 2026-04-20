@@ -12,18 +12,16 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="License: GPL-3.0-or-later" /></a>
   <img src="https://img.shields.io/badge/platform-Android-green.svg" alt="Platform: Android" />
   <img src="https://img.shields.io/badge/min%20SDK-31%20(Android%2012)-brightgreen.svg" alt="Min SDK: 31" />
-  <a href="https://f-droid.org/packages/com.robinroy.martial_body/"><img src="https://img.shields.io/f-droid/v/com.robinroy.martial_body.svg" alt="F-Droid" /></a>
-  <a href="https://github.com/BloodBlinker/martial-body/releases"><img src="https://img.shields.io/github/v/release/BloodBlinker/martial-body" alt="GitHub Release" /></a>
   <img src="https://img.shields.io/badge/built%20with-Flutter-02569B.svg?logo=flutter" alt="Built with Flutter" />
 </p>
 
 <p align="center">
   <a href="https://f-droid.org/packages/com.robinroy.martial_body/">
-    <img src="https://f-droid.org/badge/get-it-on.png" height="80" alt="Get it on F-Droid" />
+    <img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="60" />
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/BloodBlinker/martial-body/releases">
-    <img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android" height="34" alt="Download APK" />
+    <img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android" alt="Download APK" height="60" />
   </a>
 </p>
 
@@ -42,7 +40,6 @@ The entire programme lives on-device in a local SQLite database. No internet con
 - [Screenshots](#screenshots)
 - [Install (APK)](#install-apk)
 - [Build from source](#build-from-source)
-- [Architecture overview](#architecture-overview)
 - [Project structure](#project-structure)
 - [Tech stack](#tech-stack)
 - [Contributing](#contributing)
@@ -57,33 +54,31 @@ Most fitness apps dump you into a generic exercise library and tell you to figur
 
 Martial Body takes a different approach:
 
-🎯 **One programme, one goal** — every session is mapped out for you, from Foundation to MMA Transition.  
-📅 **24 weeks, 4 phases** — progressive overload with automatic deload weeks baked in.  
-🔒 **Your data stays yours** — zero network calls, zero permissions, zero tracking.  
-🥊 **Built for day one** — you don't need to be fit to start; the programme meets you where you are.
+- **One programme, one goal** — every session is mapped out for you, from Foundation to MMA Transition.
+- **24 weeks, 4 phases** — progressive overload with automatic deload weeks baked in.
+- **Your data stays yours** — zero network calls, zero permissions, zero tracking.
+- **Built for day one** — you don't need to be fit to start; the programme meets you where you are.
 
-This app exists because the developer needed it and it didn't exist. It's opinionated by design.
+This app exists because the developer needed it and it didn't exist. It is opinionated by design.
 
 ---
 
 ## Features
 
-| | Feature | Details |
-|---|---|---|
-| 🏋️ | **4-phase progressive programme** | Foundation → Engine Build → Full Combat → MMA Transition |
-| 📋 | **Guided active sessions** | Step-by-step walkthrough of every exercise, set, rep, and rest period |
-| 📉 | **Automatic deload weeks** | Volume reduced 40–50 % on weeks 4, 10, 16, and 20 |
-| ⏱️ | **Interval timer** | Built-in work/rest timer for conditioning blocks and sprint intervals |
-| 🥊 | **Phase 4 taper & shadowboxing** | Progressive volume reduction with shadowboxing integration |
-| 🛡️ | **Left-shoulder safety protocol** | Contextual warnings during pressing movements |
-| 📊 | **Progress tracking** | Session history, weekly completion, phase progress, and streak tracking |
-| 📈 | **Progress charts** | Visual analytics powered by fl_chart |
-| ❤️ | **Profile & health metrics** | BMI, BMR, Devine ideal weight, Deurenberg body fat estimates |
-| 📤 | **CSV export** | Export your workout history via the share sheet |
-| 🍽️ | **Phase-specific meal plans** | Reference nutrition guidelines for each training phase |
-| ✈️ | **Fully offline** | Zero network calls, zero permissions beyond storage |
-| 🌙 | **Dark theme** | Single cohesive dark UI throughout |
-| 🚫 | **No accounts, no cloud sync, no ads, no tracking** | |
+- **4-phase progressive programme** — Foundation → Engine Build → Full Combat → MMA Transition
+- **Guided active sessions** — step-by-step walkthrough of every exercise, set, rep, and rest period
+- **Automatic deload weeks** — volume reduced 40-50 % on weeks 4, 10, 16, and 20
+- **Interval timer** — built-in work/rest timer for conditioning blocks and sprint intervals
+- **Phase 4 taper & shadowboxing** — progressive volume reduction with shadowboxing integration
+- **Left-shoulder safety protocol** — contextual warnings during pressing movements
+- **Progress tracking** — session history, weekly completion, phase progress, and streak tracking
+- **Progress charts** — visual analytics powered by fl_chart
+- **Profile & health metrics** — BMI, BMR, Devine ideal weight, Deurenberg body fat estimates
+- **CSV export** — export your workout history via the share sheet
+- **Phase-specific meal plans** — reference nutrition guidelines for each training phase
+- **Fully offline** — zero network calls, zero permissions beyond storage
+- **Dark theme** — single cohesive dark UI throughout
+- **No accounts, no cloud sync, no ads, no tracking**
 
 ---
 
@@ -176,49 +171,6 @@ flutter test
 ```
 
 Tests cover health-metric calculations, phase-boundary logic, and DAO round-trips.
-
----
-
-## Architecture overview
-
-```mermaid
-flowchart TD
-    subgraph UI["UI Layer (Features)"]
-        A[Home / Meal Plans]
-        B[Session Runner]
-        C[Progress / Charts]
-        D[Programme Calendar]
-        E[Profile / Metrics]
-        F[Onboarding]
-    end
-
-    subgraph State["State Layer"]
-        G[Riverpod Providers]
-    end
-
-    subgraph Core["Core Layer"]
-        H[Phase Math]
-        I[Health Metrics]
-        J[CSV Export]
-        K[Seed Data]
-        L[Meal Plans]
-    end
-
-    subgraph Data["Data Layer"]
-        M[(Drift / SQLite)]
-    end
-
-    UI --> State
-    State --> Core
-    Core --> Data
-```
-
-**Key design decisions:**
-
-- **Offline-first** — all data lives in a single SQLite database via [Drift](https://pub.dev/packages/drift). No network layer exists.
-- **Unidirectional data flow** — UI reads state from Riverpod providers; writes go through DAOs.
-- **Deterministic programme** — phase/week mapping is pure math (`phase_math.dart`), not configuration.
-- **Seeder pattern** — the full 24-week programme is seeded into the database on first launch from static Dart data.
 
 ---
 
