@@ -1,0 +1,11 @@
+Initial release.
+
+• Complete 24-week MMA preparation programme (4 phases, 120 sessions)
+• Guided active sessions with set tracking and rest timers
+• Built-in interval timer for conditioning and sprint protocols
+• Automatic deload weeks with volume reduction
+• Progress tracking, charts, and streak counter
+• Profile with health metrics (BMI, BMR, Devine, Deurenberg)
+• Phase-specific meal plan references
+• CSV workout export
+• Fully offline — no network, no accounts, no tracking

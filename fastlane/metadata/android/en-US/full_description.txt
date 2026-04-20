@@ -1,0 +1,42 @@
+Martial Body is a free and open-source Android app that guides a complete beginner through a structured 24-week training programme designed to get them physically ready to walk into their first MMA class.
+
+This is not a generic fitness app. There is one fixed programme, one path, and one goal. The entire programme lives on-device in a local SQLite database. No internet connection is required after installation. No telemetry, no analytics, no ads.
+
+<b>Programme Structure</b>
+
+The 24-week plan is split into four progressive phases:
+
+• Phase 1 — Foundation (Weeks 1–6): Build base fitness with mobility work, steady-state cardio, and fundamental strength exercises at 60–70% intensity.
+• Phase 2 — Engine Build (Weeks 7–12): Introduce interval training and increase intensity to 75–80%. Conditioning blocks begin.
+• Phase 3 — Full Combat (Weeks 13–20): Peak intensity at 85–90% with all-out sprint intervals, finishing circuits, and combat-specific conditioning.
+• Phase 4 — MMA Transition (Weeks 21–24): Progressive volume taper with shadowboxing integration. 4 training days per week as you prepare to enter the gym.
+
+Deload weeks (4, 10, 16, 20) automatically reduce volume by 40–50% while maintaining intensity.
+
+<b>Features</b>
+
+• Guided active sessions — step-by-step walkthrough of every exercise, set, rep, and rest period
+• Built-in interval timer for conditioning blocks and sprint protocols
+• Automatic deload week detection and volume adjustment
+• Left-shoulder safety protocol with contextual warnings
+• Progress tracking — session history, weekly completion, phase progress, streak
+• Visual analytics and progress charts
+• Profile with health metrics (BMI, BMR, ideal weight estimates)
+• Phase-specific meal plan references
+• CSV workout export via share sheet
+• Dark theme throughout
+
+<b>Privacy</b>
+
+• Zero network calls — fully offline after install
+• No accounts, no cloud sync
+• No analytics or tracking of any kind
+• No ads, no in-app purchases
+• All data stored locally in on-device SQLite
+
+<b>Requirements</b>
+
+• Android 12 (API 31) or newer
+
+Source code: https://github.com/BloodBlinker/martial-body
+License: GPL-3.0-or-later
