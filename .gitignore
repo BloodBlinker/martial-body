@@ -8,6 +8,9 @@
 # Claude Code / Gemini local config
 .claude/
 
+# Internal design documents (not for public distribution)
+docs/
+
 # OS junk
 .DS_Store
 Thumbs.db
