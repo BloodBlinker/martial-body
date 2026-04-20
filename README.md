@@ -117,14 +117,15 @@ martial-body/
 ├── NOTICE                         # Author attribution & third-party notices
 ├── README.md                      # This file
 ├── docs/                          # Design documents (PRD, architecture)
+├── fastlane/                      # F-Droid/Google Play metadata & screenshots
 └── martial_body/                  # Flutter project root
     ├── android/                   # Android platform shell
-    ├── assets/                    # App icon
+    ├── assets/                    # App icons
     ├── lib/
     │   ├── main.dart              # Bootstrap: database, seeder, providers
     │   ├── app.dart               # MaterialApp.router + bottom-nav shell
     │   ├── core/
-    │   │   ├── database/          # Drift schema, tables, DAOs, migrations
+    │   │   ├── database/          # Drift schema, tables, DAOs
     │   │   ├── models/            # UI-facing view models
     │   │   ├── program/           # Phase math (week → phase mapping)
     │   │   ├── providers/         # Riverpod providers
