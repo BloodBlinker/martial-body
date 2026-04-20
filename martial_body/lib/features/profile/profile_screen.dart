@@ -1,7 +1,23 @@
+// Martial Body — 24-week MMA preparation trainer
+// Copyright (C) 2026 Robin Roy <robinroy3107@gmail.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/database/database.dart';
 import '../../core/export/csv_exporter.dart';
@@ -10,9 +26,9 @@ import '../../core/providers/database_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/theme/app_colors.dart';
 
-/// Public URL of the hosted privacy policy — shown on the Profile tab and
-/// referenced from Play Console. Update to the real GitHub Pages URL when
-/// published.
+/// Public URL of the hosted privacy policy — shown on the Profile tab.
+/// Displayed in an in-app dialog so no INTERNET permission or external
+/// launcher is needed.
 const String kPrivacyPolicyUrl =
     'https://bloodblinker.github.io/martial-body/privacy.html';
 
@@ -389,15 +405,53 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
   }
 
   Future<void> _openPrivacyPolicy() async {
-    final ok = await launchUrl(
-      Uri.parse(kPrivacyPolicyUrl),
-      mode: LaunchMode.externalApplication,
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Privacy Policy',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'You can read the full privacy policy at:',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            SelectableText(
+              kPrivacyPolicyUrl,
+              style: const TextStyle(
+                color: AppColors.gold,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(
+                const ClipboardData(text: kPrivacyPolicyUrl),
+              );
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('URL copied to clipboard')),
+              );
+            },
+            child: const Text('Copy URL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
     );
-    if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open privacy policy')),
-      );
-    }
   }
 
   Widget _buildHeader(BuildContext context) {

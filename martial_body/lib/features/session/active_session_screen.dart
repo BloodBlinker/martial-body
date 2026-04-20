@@ -1,10 +1,25 @@
+// Martial Body — 24-week MMA preparation trainer
+// Copyright (C) 2026 Robin Roy <robinroy3107@gmail.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/database/database.dart';
 import '../../core/models/active_session_state.dart';
@@ -511,19 +526,6 @@ class _ExerciseCard extends StatefulWidget {
 class _ExerciseCardState extends State<_ExerciseCard> {
   bool _showNotes = false;
 
-  Future<void> _openDemo(BuildContext context, String exerciseName) async {
-    final uri = Uri.https(
-      'www.youtube.com',
-      '/results',
-      {'search_query': '$exerciseName form demo'},
-    );
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open demo video')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -545,15 +547,6 @@ class _ExerciseCardState extends State<_ExerciseCard> {
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Watch demo',
-                onPressed: () => _openDemo(context, widget.name),
-                icon: Icon(
-                  Icons.play_circle_outline,
-                  color: widget.accent,
-                  semanticLabel: 'Watch ${widget.name} demo',
                 ),
               ),
             ],

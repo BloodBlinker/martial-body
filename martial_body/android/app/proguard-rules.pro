@@ -18,9 +18,8 @@
 -keep class androidx.sqlite.** { *; }
 
 # ---- Plugins we depend on ------------------------------------------------
-# url_launcher, share_plus, path_provider — keep their entry points so the
+# share_plus, path_provider — keep their entry points so the
 # MethodChannel lookups survive minification.
--keep class io.flutter.plugins.urllauncher.** { *; }
 -keep class dev.fluttercommunity.plus.share.** { *; }
 -keep class io.flutter.plugins.pathprovider.** { *; }
 

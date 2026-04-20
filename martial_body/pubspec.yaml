@@ -20,10 +20,8 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.24
   path_provider: ^2.1.4
   path: ^1.9.0
-  # Launch YouTube-search URLs from the active session for exercise demos,
-  # and open the hosted privacy policy from Profile.
-  url_launcher: ^6.3.1
   # Share the user's exported CSV from the Profile tab.
+  # (url_launcher removed — all outbound links replaced with in-app display)
   share_plus: ^10.1.2
 
 dev_dependencies:

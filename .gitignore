@@ -1,0 +1,13 @@
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Claude Code / Gemini local config
+.claude/
+
+# OS junk
+.DS_Store
+Thumbs.db

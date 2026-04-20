@@ -1,0 +1,36 @@
+Martial Body
+Copyright (C) 2026 Robin Roy <robinroy3107@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+────────────────────────────────────────────────────────────────────
+
+Author:    Robin Roy
+GitHub:    https://github.com/BloodBlinker
+Email:     robinroy3107@gmail.com
+Project:   https://github.com/BloodBlinker/martial-body
+
+────────────────────────────────────────────────────────────────────
+
+Third-party dependencies used by this project are listed in
+martial_body/pubspec.yaml with their respective licenses.
+Notably:
+
+  drift         — MIT License   — https://pub.dev/packages/drift
+  fl_chart      — MIT License   — https://pub.dev/packages/fl_chart
+  go_router     — BSD-3-Clause  — https://pub.dev/packages/go_router
+  flutter_riverpod — MIT License — https://pub.dev/packages/flutter_riverpod
+  share_plus    — BSD-3-Clause  — https://pub.dev/packages/share_plus
+  path_provider — BSD-3-Clause  — https://pub.dev/packages/path_provider
+  sqlite3_flutter_libs — MIT License — https://pub.dev/packages/sqlite3_flutter_libs
