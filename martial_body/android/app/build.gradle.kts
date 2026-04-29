@@ -72,12 +72,13 @@ android {
     }
 }
 
-// Exclude Google Play Core from the Flutter embedding AAR dependency tree.
-// Flutter's engine includes Play Core classes for optional deferred components support.
-// This app does not use deferred components, so we exclude them from the classpath
-// during both compile and runtime. This prevents R8 from keeping them during minification.
+// Exclude the entire com.google.android.play group from the dependency graph.
+// Flutter's embedding AAR pulls in multiple Play Core modules:
+//   com.google.android.play:core          → OnSuccessListener, OnFailureListener
+//   com.google.android.play:feature-delivery → SplitInstallManager, SplitCompatApplication
+// Excluding only "core" missed "feature-delivery". Excluding the whole group removes all of them.
 configurations.configureEach {
-    exclude(group = "com.google.android.play", module = "core")
+    exclude(group = "com.google.android.play")
 }
 
 flutter {
