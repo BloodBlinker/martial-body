@@ -26,14 +26,10 @@
 -keep class io.flutter.view.** { *; }
 -dontwarn io.flutter.embedding.**
 
-# Remove Play Core and deferred components entirely.
-# These classes are compiled into Flutter's engine but unused by this app.
-# Tell R8 these classes have no extensions, allowing aggressive shrinking/removal.
--assumenoextension,allowshrinking class com.google.android.play.core.** { *; }
--assumenoextension,allowshrinking class com.google.android.play.** { *; }
--assumenoextension,allowshrinking class io.flutter.embedding.engine.deferredcomponents.** { *; }
-
-# Suppress warnings about missing Play Core references
+# Play Core and deferred components are unused by this app.
+# No -keep rule covers these packages, so R8 is free to remove them entirely
+# (they are not reachable from app code because FlutterInjector loads
+# PlayStoreDeferredComponentManager via reflection, which R8 does not follow).
 -dontwarn com.google.android.play.**
 -dontwarn io.flutter.embedding.engine.deferredcomponents.**
 
