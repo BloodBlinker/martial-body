@@ -1,16 +1,26 @@
 package com.robinroy.martial_body
 
 import android.app.Application
-import io.flutter.embedding.engine.FlutterInjector
 
 class App : Application() {
     override fun onCreate() {
-        // Configure FlutterInjector before Flutter initialises.
-        // By default Flutter creates a PlayStoreDeferredComponentManager (which pulls in
-        // Google Play Core classes). This app has no deferred components, so we provide
-        // an injector with no deferred component manager. R8 can then remove
-        // PlayStoreDeferredComponentManager and its Play Core dependencies entirely.
-        FlutterInjector.setInstance(FlutterInjector.Builder().build())
+        disableDeferredComponents()
         super.onCreate()
+    }
+
+    // Configure FlutterInjector to not create a PlayStoreDeferredComponentManager.
+    // Done via reflection to avoid a compile-time dependency on the Flutter engine JAR,
+    // which may not be on the classpath during F-Droid's Kotlin compilation phase.
+    // At runtime the Flutter engine is always present so the reflection calls succeed.
+    private fun disableDeferredComponents() {
+        try {
+            val injectorClass = Class.forName("io.flutter.embedding.engine.FlutterInjector")
+            val builderClass = Class.forName("io.flutter.embedding.engine.FlutterInjector\$Builder")
+            val builder = builderClass.getDeclaredConstructor().newInstance()
+            val injector = builderClass.getMethod("build").invoke(builder)
+            injectorClass.getMethod("setInstance", injectorClass).invoke(null, injector)
+        } catch (_: Exception) {
+            // Flutter not initialised yet or API not available — safe to ignore.
+        }
     }
 }
