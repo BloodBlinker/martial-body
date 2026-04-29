@@ -65,6 +65,18 @@ android {
             )
         }
     }
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+}
+
+// Flutter's deferred-components feature pulls in Google Play Core, which F-Droid
+// rejects. This app does not use deferred components so the dependency is safe to drop.
+configurations.all {
+    exclude(group = "com.google.android.play", module = "core")
+    exclude(group = "com.google.android.play", module = "core-ktx")
 }
 
 flutter {
