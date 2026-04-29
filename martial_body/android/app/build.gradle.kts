@@ -72,11 +72,12 @@ android {
     }
 }
 
-// Flutter's deferred-components feature pulls in Google Play Core, which F-Droid
-// rejects. This app does not use deferred components so the dependency is safe to drop.
-configurations.all {
+// Exclude Google Play Core from the Flutter embedding AAR dependency tree.
+// Flutter's engine includes Play Core classes for optional deferred components support.
+// This app does not use deferred components, so we exclude them from the classpath
+// during both compile and runtime. This prevents R8 from keeping them during minification.
+configurations.configureEach {
     exclude(group = "com.google.android.play", module = "core")
-    exclude(group = "com.google.android.play", module = "core-ktx")
 }
 
 flutter {
