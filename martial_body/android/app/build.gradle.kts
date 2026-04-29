@@ -17,6 +17,7 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+
 android {
     namespace = "com.robinroy.martial_body"
     compileSdk = 35
