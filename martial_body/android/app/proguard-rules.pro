@@ -26,13 +26,16 @@
 -keep class io.flutter.view.** { *; }
 -dontwarn io.flutter.embedding.**
 
-# This app has no deferred components. Inform R8 that the deferred component
-# manager is always absent so the PlayStoreDeferredComponentManager code path
-# and its Google Play Core class references become dead code and are removed.
--assumenosideeffects class io.flutter.embedding.engine.FlutterInjector {
-    public io.flutter.embedding.engine.deferredcomponents.DeferredComponentManager deferredComponentManager();
-}
+# Remove Play Core and deferred components entirely.
+# These classes are compiled into Flutter's engine but unused by this app.
+# Tell R8 these classes have no extensions, allowing aggressive shrinking/removal.
+-assumenoextension,allowshrinking class com.google.android.play.core.** { *; }
+-assumenoextension,allowshrinking class com.google.android.play.** { *; }
+-assumenoextension,allowshrinking class io.flutter.embedding.engine.deferredcomponents.** { *; }
+
+# Suppress warnings about missing Play Core references
 -dontwarn com.google.android.play.**
+-dontwarn io.flutter.embedding.engine.deferredcomponents.**
 
 # ---- SQLite / drift ------------------------------------------------------
 # The sqlite3_flutter_libs JNI layer loads native symbols by name.
