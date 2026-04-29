@@ -72,14 +72,7 @@ android {
     }
 }
 
-// Exclude the entire com.google.android.play group from the dependency graph.
-// Flutter's embedding AAR pulls in multiple Play Core modules:
-//   com.google.android.play:core          → OnSuccessListener, OnFailureListener
-//   com.google.android.play:feature-delivery → SplitInstallManager, SplitCompatApplication
-// Excluding only "core" missed "feature-delivery". Excluding the whole group removes all of them.
-configurations.configureEach {
-    exclude(group = "com.google.android.play")
-}
+
 
 flutter {
     source = "../.."
