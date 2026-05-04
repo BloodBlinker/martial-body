@@ -1,0 +1,31 @@
+name: Build Release APK
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: martial_body
+
+      - name: Build APK
+        run: flutter build apk --release
+        working-directory: martial_body
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: martial_body/build/app/outputs/flutter-apk/app-release.apk
