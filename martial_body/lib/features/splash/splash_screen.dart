@@ -19,7 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers/database_provider.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:martial_body/core/theme/app_colors.dart';
 
 /// Brief brand splash shown on every cold start. The minimum visible duration
 /// is enforced regardless of how fast the DB read resolves so the logo never
@@ -56,7 +56,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -76,7 +76,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     letterSpacing: 3.5,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.gold,
+                    color: context.appColors.gold,
                   ),
             ),
           ],

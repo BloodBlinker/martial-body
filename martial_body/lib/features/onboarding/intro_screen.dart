@@ -19,7 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers/database_provider.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:martial_body/core/theme/app_colors.dart';
 
 /// First-run intro. Tapping "Start Training" creates the user_state row with
 /// today's date — that row's existence is the "has onboarded" flag, and its
@@ -65,17 +65,17 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
         bool checked = false;
         return StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
-            backgroundColor: AppColors.surface,
-            title: const Text(
+            backgroundColor: context.appColors.surface,
+            title: Text(
               'Before you start',
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: context.appColors.textPrimary),
             ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'This 24-week program is a general fitness guide, not '
                     'medical advice. High-intensity training and combat-sport '
                     'preparation carry real injury risk.\n\n'
@@ -93,7 +93,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                     'risk. The developer accepts no liability for injury or '
                     'loss arising from use of this app.',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: context.appColors.textSecondary,
                       height: 1.5,
                     ),
                   ),
@@ -107,16 +107,16 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                           value: checked,
                           onChanged: (v) =>
                               setDialogState(() => checked = v ?? false),
-                          activeColor: AppColors.gold,
+                          activeColor: context.appColors.gold,
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(top: 12),
                             child: Text(
                               'I have read and understand the above. I am '
                               'medically cleared to train and accept full '
                               'responsibility for my participation.',
-                              style: TextStyle(color: AppColors.textPrimary),
+                              style: TextStyle(color: context.appColors.textPrimary),
                             ),
                           ),
                         ),
@@ -129,13 +129,13 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
+                child: Text('Cancel'),
               ),
               TextButton(
                 onPressed: checked ? () => Navigator.of(ctx).pop(true) : null,
                 style:
-                    TextButton.styleFrom(foregroundColor: AppColors.gold),
-                child: const Text('Begin program'),
+                    TextButton.styleFrom(foregroundColor: context.appColors.gold),
+                child: Text('Begin program'),
               ),
             ],
           ),
@@ -148,7 +148,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(32, 32, 32, 40),
@@ -174,7 +174,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                 style: tt.headlineMedium?.copyWith(
                   letterSpacing: 4,
                   fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
+                  color: context.appColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 14),
@@ -182,7 +182,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                 '24 weeks. Four phases.\nOne fight-ready body.',
                 textAlign: TextAlign.center,
                 style: tt.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.appColors.textSecondary,
                   height: 1.5,
                   letterSpacing: 0.3,
                 ),
@@ -211,12 +211,12 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                 child: ElevatedButton(
                   onPressed: _starting ? null : _onStart,
                   child: _starting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.background,
+                            color: context.appColors.background,
                           ),
                         )
                       : const Text('START TRAINING'),
@@ -249,10 +249,10 @@ class _FeatureRow extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.gold.withAlpha(22),
+            color: context.appColors.gold.withAlpha(22),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 20, color: AppColors.gold),
+          child: Icon(icon, size: 20, color: context.appColors.gold),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -269,7 +269,7 @@ class _FeatureRow extends StatelessWidget {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.appColors.textSecondary,
                     ),
               ),
             ],

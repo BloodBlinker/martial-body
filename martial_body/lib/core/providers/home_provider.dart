@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../database/database.dart';
 import '../models/home_view_model.dart';
 import '../program/phase_math.dart';
 import 'database_provider.dart';
@@ -52,6 +53,16 @@ final homeProvider = StreamProvider<HomeViewModel>((ref) {
 
     final totalCompletedSessions = allLogs.where((l) => l.completed).length;
 
+    // Most-recent incomplete log per session — watchAllLogs() is ordered desc,
+    // so the first incomplete entry we see per session is the most recent.
+    final inProgressLogBySessionId = <int, WorkoutLog>{};
+    for (final log in allLogs) {
+      if (!log.completed &&
+          !inProgressLogBySessionId.containsKey(log.sessionId)) {
+        inProgressLogBySessionId[log.sessionId] = log;
+      }
+    }
+
     return HomeViewModel(
       weekNumber: weekNumber,
       phaseNumber: phase.number,
@@ -62,6 +73,7 @@ final homeProvider = StreamProvider<HomeViewModel>((ref) {
       completedThisWeek: completedThisWeek,
       totalCompletedSessions: totalCompletedSessions,
       programStartDate: programStartDate,
+      inProgressLogBySessionId: inProgressLogBySessionId,
     );
   });
 });

@@ -15,18 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:drift/drift.dart';
-import 'workout_logs.dart';
-import 'block_exercises.dart';
 
-class SetLogs extends Table {
+class UserWeights extends Table {
+  @override
+  String get tableName => 'user_weights';
+
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get workoutLogId => integer().references(WorkoutLogs, #id)();
-  IntColumn get blockExerciseId => integer().references(BlockExercises, #id)();
-  IntColumn get setNumber => integer()();
-  IntColumn get repsCompleted => integer().nullable()();
-  IntColumn get leftRepsCompleted => integer().nullable()();
-  IntColumn get rightRepsCompleted => integer().nullable()();
-  RealColumn get weightKg => real().nullable()();
-  BoolColumn get completed => boolean().withDefault(const Constant(false))();
-  DateTimeColumn get completedAt => dateTime().nullable()();
+  DateTimeColumn get date => dateTime()();
+  RealColumn get weightKg => real()();
 }

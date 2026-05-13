@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/meal_plans/meal_plan.dart';
 import '../../../core/program/phase_math.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:martial_body/core/theme/app_colors.dart';
 
 /// Renders a [MealPlan] — totals card, per-meal cards, optional deload note,
 /// and an expandable prep-notes section. Pure presentation: the caller picks
@@ -61,7 +61,7 @@ class _MealPlanHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.phaseColor(phase.number);
+    final color = context.appColors.phaseColor(phase.number);
     final tt = Theme.of(context).textTheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,9 +113,9 @@ class _MacroTotalsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +127,7 @@ class _MacroTotalsCard extends StatelessWidget {
                 '${totals.calories}',
                 style: tt.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   height: 1.0,
                 ),
               ),
@@ -136,7 +136,7 @@ class _MacroTotalsCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   'kcal / day',
-                  style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  style: tt.bodySmall?.copyWith(color: context.appColors.textSecondary),
                 ),
               ),
             ],
@@ -148,7 +148,7 @@ class _MacroTotalsCard extends StatelessWidget {
                 child: _MacroPill(
                   label: 'PROTEIN',
                   value: '${totals.proteinG}g',
-                  color: AppColors.phase1,
+                  color: context.appColors.phase1,
                 ),
               ),
               const SizedBox(width: 8),
@@ -156,7 +156,7 @@ class _MacroTotalsCard extends StatelessWidget {
                 child: _MacroPill(
                   label: 'CARBS',
                   value: '${totals.carbsG}g',
-                  color: AppColors.phase4,
+                  color: context.appColors.phase4,
                 ),
               ),
               const SizedBox(width: 8),
@@ -164,7 +164,7 @@ class _MacroTotalsCard extends StatelessWidget {
                 child: _MacroPill(
                   label: 'FAT',
                   value: '${totals.fatG}g',
-                  color: AppColors.phase2,
+                  color: context.appColors.phase2,
                 ),
               ),
             ],
@@ -212,7 +212,7 @@ class _MacroPill extends StatelessWidget {
           Text(
             value,
             style: tt.titleMedium?.copyWith(
-              color: AppColors.textPrimary,
+              color: context.appColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -234,14 +234,14 @@ class _DeloadNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: AppColors.deloadMuted,
+        color: context.appColors.deloadMuted,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.deload.withAlpha(80)),
+        border: Border.all(color: context.appColors.deload.withAlpha(80)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.waves, size: 16, color: AppColors.deload),
+          Icon(Icons.waves, size: 16, color: context.appColors.deload),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -250,7 +250,7 @@ class _DeloadNote extends StatelessWidget {
                 Text(
                   'DELOAD ADJUSTMENT',
                   style: tt.labelSmall?.copyWith(
-                    color: AppColors.deload,
+                    color: context.appColors.deload,
                     letterSpacing: 1.2,
                     fontWeight: FontWeight.bold,
                   ),
@@ -259,7 +259,7 @@ class _DeloadNote extends StatelessWidget {
                 Text(
                   text,
                   style: tt.bodySmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     height: 1.4,
                   ),
                 ),
@@ -283,9 +283,9 @@ class _MealCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,7 +302,7 @@ class _MealCard extends StatelessWidget {
                       Text(
                         meal.name.toUpperCase(),
                         style: tt.labelSmall?.copyWith(
-                          color: AppColors.gold,
+                          color: context.appColors.gold,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.4,
                         ),
@@ -312,7 +312,7 @@ class _MealCard extends StatelessWidget {
                         Text(
                           meal.subtitle!,
                           style: tt.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.appColors.textSecondary,
                           ),
                         ),
                       ],
@@ -323,16 +323,16 @@ class _MealCard extends StatelessWidget {
                   Text(
                     meal.timeLabel!,
                     style: tt.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.appColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
               ],
             ),
           ),
-          const Divider(height: 1, color: AppColors.divider),
+          Divider(height: 1, color: context.appColors.divider),
           for (var i = 0; i < meal.items.length; i++) ...[
-            if (i > 0) const Divider(height: 1, color: AppColors.divider),
+            if (i > 0) Divider(height: 1, color: context.appColors.divider),
             _MealItemRow(item: meal.items[i]),
           ],
         ],
@@ -360,7 +360,7 @@ class _MealItemRow extends StatelessWidget {
                 child: Text(
                   item.name,
                   style: tt.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -369,7 +369,7 @@ class _MealItemRow extends StatelessWidget {
               Text(
                 item.amount,
                 style: tt.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.appColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -378,16 +378,16 @@ class _MealItemRow extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              _ItemMacro(label: 'P', value: '${item.proteinG}g', color: AppColors.phase1),
+              _ItemMacro(label: 'P', value: '${item.proteinG}g', color: context.appColors.phase1),
               const SizedBox(width: 10),
-              _ItemMacro(label: 'C', value: '${item.carbsG}g', color: AppColors.phase4),
+              _ItemMacro(label: 'C', value: '${item.carbsG}g', color: context.appColors.phase4),
               const SizedBox(width: 10),
-              _ItemMacro(label: 'F', value: '${item.fatG}g', color: AppColors.phase2),
+              _ItemMacro(label: 'F', value: '${item.fatG}g', color: context.appColors.phase2),
               const Spacer(),
               Text(
                 '${item.calories} kcal',
                 style: tt.labelSmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.appColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -436,7 +436,7 @@ class _ItemMacro extends StatelessWidget {
         Text(
           value,
           style: tt.labelSmall?.copyWith(
-            color: AppColors.textSecondary,
+            color: context.appColors.textSecondary,
           ),
         ),
       ],
@@ -455,21 +455,21 @@ class _PrepNotesSection extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-          iconColor: AppColors.gold,
-          collapsedIconColor: AppColors.textSecondary,
+          iconColor: context.appColors.gold,
+          collapsedIconColor: context.appColors.textSecondary,
           title: Row(
             children: [
-              const Icon(Icons.menu_book_outlined,
-                  size: 18, color: AppColors.gold),
+              Icon(Icons.menu_book_outlined,
+                  size: 18, color: context.appColors.gold),
               const SizedBox(width: 10),
               Text(
                 'Preparation notes',
@@ -502,7 +502,7 @@ class _PrepNoteTile extends StatelessWidget {
         Text(
           note.category,
           style: tt.labelSmall?.copyWith(
-            color: AppColors.gold,
+            color: context.appColors.gold,
             letterSpacing: 1.2,
             fontWeight: FontWeight.bold,
           ),
@@ -511,7 +511,7 @@ class _PrepNoteTile extends StatelessWidget {
         Text(
           note.body,
           style: tt.bodySmall?.copyWith(
-            color: AppColors.textPrimary,
+            color: context.appColors.textPrimary,
             height: 1.45,
           ),
         ),

@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -23,14 +22,10 @@ import '../../core/database/database.dart';
 import '../../core/export/csv_exporter.dart';
 import '../../core/models/health_metrics.dart';
 import '../../core/providers/database_provider.dart';
+import '../../core/providers/theme_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:martial_body/core/theme/app_colors.dart';
 
-/// Public URL of the hosted privacy policy — shown on the Profile tab.
-/// Displayed in an in-app dialog so no INTERNET permission or external
-/// launcher is needed.
-const String kPrivacyPolicyUrl =
-    'https://bloodblinker.github.io/martial-body/privacy.html';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -39,15 +34,15 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(userProfileProvider);
     return async.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+      loading: () => Scaffold(
+        backgroundColor: context.appColors.background,
+        body: Center(child: CircularProgressIndicator(color: context.appColors.gold)),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.appColors.background,
         body: Center(
           child: Text('Error: $e',
-              style: const TextStyle(color: AppColors.textSecondary)),
+              style: TextStyle(color: context.appColors.textSecondary)),
         ),
       ),
       data: (profile) => _ProfileBody(profile: profile),
@@ -177,8 +172,37 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
   Widget build(BuildContext context) {
     final metrics = _metrics;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return PopScope(
+      canPop: !_dirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final leave = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: context.appColors.surface,
+            title: Text('Unsaved changes',
+                style: TextStyle(color: context.appColors.textPrimary)),
+            content: Text(
+              'You have unsaved changes. Leave without saving?',
+              style: TextStyle(color: context.appColors.textSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Stay'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: TextButton.styleFrom(foregroundColor: context.appColors.error),
+                child: const Text('Discard'),
+              ),
+            ],
+          ),
+        );
+        if (leave == true && context.mounted) Navigator.of(context).pop();
+      },
+      child: Scaffold(
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,29 +297,42 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                       _HealthPanel(metrics: metrics),
                     ],
                     const SizedBox(height: 28),
-                    if (_dirty)
-                      FilledButton(
-                        onPressed: _saving ? null : _save,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.phase1,
-                          foregroundColor: AppColors.background,
-                          minimumSize: const Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                    FilledButton(
+                      onPressed: (_dirty && !_saving) ? _save : null,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: context.appColors.phase1,
+                        foregroundColor: context.appColors.background,
+                        disabledBackgroundColor: context.appColors.surfaceVariant,
+                        disabledForegroundColor: context.appColors.textSecondary,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.background,
-                                ),
-                              )
-                            : const Text('Save Profile',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
+                      child: _saving
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: context.appColors.background,
+                              ),
+                            )
+                          : const Text('Save Profile',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 28),
+                    _SectionLabel('APPEARANCE'),
+                    const SizedBox(height: 12),
+                    _InputCard(children: [
+                      _ActionRow(
+                        icon: Icons.brightness_medium_outlined,
+                        label: 'Toggle Theme Mode',
+                        onTap: () {
+                          ref.read(themeModeProvider.notifier).toggleTheme();
+                        },
+                      ),
+                    ]),
                     const SizedBox(height: 28),
                     _SectionLabel('DATA & PRIVACY'),
                     const SizedBox(height: 12),
@@ -323,7 +360,7 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                       child: Text(
                         'Martial Body · v1.0.0',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.textSecondary.withAlpha(140),
+                              color: context.appColors.textSecondary.withAlpha(140),
                               letterSpacing: 0.5,
                             ),
                       ),
@@ -336,6 +373,7 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -358,13 +396,13 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
 
   Future<void> _shiftStartDate() async {
     final db = ref.read(databaseProvider);
-    final current = (await db.userDao.getUserState())?.programStartDate ??
+    final previousDate = (await db.userDao.getUserState())?.programStartDate ??
         DateTime.now();
     if (!mounted) return;
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: current,
+      initialDate: previousDate,
       // A program start can only have been in the past. Cap "future" to
       // today so users don't accidentally set week 1 to next month.
       firstDate: now.subtract(const Duration(days: 365)),
@@ -374,14 +412,14 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Shift start date?',
-            style: TextStyle(color: AppColors.textPrimary)),
+        backgroundColor: context.appColors.surface,
+        title: Text('Shift start date?',
+            style: TextStyle(color: context.appColors.textPrimary)),
         content: Text(
           'This will recompute the current week (and phase) from '
           '${picked.toIso8601String().split('T').first}. Existing workout '
           'logs keep their original week numbers.',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.appColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -390,7 +428,7 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.gold),
+            style: TextButton.styleFrom(foregroundColor: context.appColors.gold),
             child: const Text('Confirm'),
           ),
         ],
@@ -400,7 +438,16 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     await db.userDao.updateProgramStartDate(picked);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Start date updated')),
+      SnackBar(
+        content: const Text('Start date updated'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () async {
+            await db.userDao.updateProgramStartDate(previousDate);
+          },
+        ),
+        duration: const Duration(seconds: 5),
+      ),
     );
   }
 
@@ -409,42 +456,63 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
+        backgroundColor: context.appColors.surface,
+        title: Text(
           'Privacy Policy',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: context.appColors.textPrimary),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'You can read the full privacy policy at:',
-              style: TextStyle(color: AppColors.textSecondary),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Last Updated: May 2026',
+                  style: TextStyle(color: context.appColors.textSecondary, fontSize: 12),
+                ),
+                SizedBox(height: 16),
+                _PolicySection(
+                  title: 'Overview',
+                  body: 'Martial Body is an offline-first workout tracking '
+                      'application. Your data is stored exclusively on your '
+                      'device. We do not collect, transmit, or share any '
+                      'personal information.',
+                ),
+                _PolicySection(
+                  title: 'Data Storage',
+                  body: 'All workout logs, profile information, and preferences '
+                      'are stored in a local database on your device. No data '
+                      'is sent to external servers.',
+                ),
+                _PolicySection(
+                  title: 'Permissions',
+                  body: 'The app may request permission to keep the screen awake '
+                      'during active workout sessions and to share exported CSV '
+                      'files. No internet permission is required.',
+                ),
+                _PolicySection(
+                  title: 'Data Export',
+                  body: 'You can export your workout data as a CSV file via the '
+                      'Profile screen. Exported files are shared through your '
+                      'device\u2019s native share mechanism.',
+                ),
+                _PolicySection(
+                  title: 'Third-Party Services',
+                  body: 'Martial Body does not integrate with any third-party '
+                      'analytics, advertising, or tracking services.',
+                ),
+                _PolicySection(
+                  title: 'Contact',
+                  body: 'For questions or concerns about this policy, '
+                      'contact robinroy3107@gmail.com.',
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            SelectableText(
-              kPrivacyPolicyUrl,
-              style: const TextStyle(
-                color: AppColors.gold,
-                fontSize: 13,
-              ),
-            ),
-          ],
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(
-                const ClipboardData(text: kPrivacyPolicyUrl),
-              );
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('URL copied to clipboard')),
-              );
-            },
-            child: const Text('Copy URL'),
-          ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Close'),
@@ -467,22 +535,59 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     );
   }
 
-  static const TextStyle _inputStyle =
-      TextStyle(color: AppColors.textPrimary, fontSize: 15);
+  TextStyle get _inputStyle =>
+      TextStyle(color: context.appColors.textPrimary, fontSize: 15);
 
-  static InputDecoration _inputDeco(String hint) => InputDecoration(
+  InputDecoration _inputDeco(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        hintStyle: TextStyle(color: context.appColors.textSecondary, fontSize: 14),
         border: InputBorder.none,
         isDense: true,
         contentPadding: EdgeInsets.zero,
       );
 
-  static Widget _divider() => const Divider(
-        color: AppColors.divider,
+  Widget _divider() => Divider(
+        color: context.appColors.divider,
         height: 1,
         thickness: 1,
       );
+}
+
+// ---------------------------------------------------------------------------
+
+class _PolicySection extends StatelessWidget {
+  final String title;
+  final String body;
+  const _PolicySection({required this.title, required this.body});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: context.appColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            body,
+            style: TextStyle(
+              color: context.appColors.textSecondary,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -505,16 +610,16 @@ class _ActionRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.textSecondary, size: 20),
+            Icon(icon, color: context.appColors.textSecondary, size: 20),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.appColors.textPrimary),
               ),
             ),
-            const Icon(Icons.chevron_right,
-                color: AppColors.textSecondary, size: 18),
+            Icon(Icons.chevron_right,
+                color: context.appColors.textSecondary, size: 18),
           ],
         ),
       ),
@@ -531,7 +636,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: AppColors.textSecondary,
+            color: context.appColors.textSecondary,
             letterSpacing: 1.5,
           ),
     );
@@ -546,9 +651,9 @@ class _InputCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Column(children: children),
     );
@@ -573,7 +678,7 @@ class _FieldRow extends StatelessWidget {
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
-                  ?.copyWith(color: AppColors.textSecondary),
+                  ?.copyWith(color: context.appColors.textSecondary),
             ),
           ),
           Expanded(child: child),
@@ -614,16 +719,16 @@ class _Chip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? AppColors.phase1Muted : AppColors.surfaceVariant,
+          color: selected ? context.appColors.phase1Muted : context.appColors.surfaceVariant,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.phase1 : AppColors.divider,
+            color: selected ? context.appColors.phase1 : context.appColors.divider,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? AppColors.phase1 : AppColors.textSecondary,
+            color: selected ? context.appColors.phase1 : context.appColors.textSecondary,
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             fontSize: 13,
           ),
@@ -693,22 +798,22 @@ class _MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.phase1, size: 18),
+              Icon(icon, color: context.appColors.phase1, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: context.appColors.textPrimary,
                     ),
               ),
             ],
@@ -731,12 +836,12 @@ class _MetricCard extends StatelessWidget {
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: AppColors.textSecondary),
+                ?.copyWith(color: context.appColors.textSecondary),
           ),
           Text(
             row.value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
           ),

@@ -27,6 +27,9 @@ class HomeViewModel {
   final int completedThisWeek;
   final int totalCompletedSessions;
   final DateTime programStartDate;
+  /// Most-recent incomplete workout log per session ID (all time, not just today).
+  /// Used to surface RESUME / QUIT for any session that was left mid-workout.
+  final Map<int, WorkoutLog> inProgressLogBySessionId;
 
   const HomeViewModel({
     required this.weekNumber,
@@ -38,7 +41,12 @@ class HomeViewModel {
     required this.completedThisWeek,
     required this.totalCompletedSessions,
     required this.programStartDate,
+    this.inProgressLogBySessionId = const {},
   });
+
+  /// Convenience getter — the in-progress log for today's session (if any).
+  WorkoutLog? get inProgressTodayLog =>
+      todaySession != null ? inProgressLogBySessionId[todaySession!.id] : null;
 
   bool get isRestDay => todaySession == null;
 

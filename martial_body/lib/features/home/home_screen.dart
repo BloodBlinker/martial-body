@@ -24,8 +24,9 @@ import '../../core/meal_plans/meal_plan_registry.dart';
 import '../../core/models/home_view_model.dart';
 import '../../core/program/phase_math.dart';
 import '../../core/providers/home_provider.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/utils/confirm_quit_dialog.dart';
 import 'widgets/meal_plan_view.dart';
+import 'package:martial_body/core/theme/app_colors.dart';
 
 enum _HomeSection { workout, mealPlan }
 
@@ -36,18 +37,18 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(homeProvider);
     return async.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+      loading: () => Scaffold(
+        backgroundColor: context.appColors.background,
+        body: Center(child: CircularProgressIndicator(color: context.appColors.gold)),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.appColors.background,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
             child: Text(
               'Could not load programme data.\n\n$e',
-              style: const TextStyle(color: AppColors.textSecondary, height: 1.5),
+              style: TextStyle(color: context.appColors.textSecondary, height: 1.5),
               textAlign: TextAlign.center,
             ),
           ),
@@ -89,7 +90,7 @@ class _HomeBodyState extends State<_HomeBody> {
   Widget build(BuildContext context) {
     final vm = widget.vm;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -236,10 +237,10 @@ class _PhaseChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final phaseColor = AppColors.phaseColor(info.number);
-    final bg = isSelected ? phaseColor.withAlpha(28) : AppColors.surface;
-    final border = isSelected ? phaseColor.withAlpha(140) : AppColors.divider;
-    final labelColor = isSelected ? phaseColor : AppColors.textSecondary;
+    final phaseColor = context.appColors.phaseColor(info.number);
+    final bg = isSelected ? phaseColor.withAlpha(28) : context.appColors.surface;
+    final border = isSelected ? phaseColor.withAlpha(140) : context.appColors.divider;
+    final labelColor = isSelected ? phaseColor : context.appColors.textSecondary;
 
     return Material(
       color: bg,
@@ -270,7 +271,7 @@ class _PhaseChip extends StatelessWidget {
                   width: 5,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.gold,
+                    color: context.appColors.gold,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -293,9 +294,9 @@ class _SectionTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
@@ -335,7 +336,7 @@ class _SectionPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Material(
-        color: isSelected ? AppColors.gold.withAlpha(22) : Colors.transparent,
+        color: isSelected ? context.appColors.gold.withAlpha(22) : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           onTap: onTap,
@@ -348,13 +349,13 @@ class _SectionPill extends StatelessWidget {
                 Icon(
                   icon,
                   size: 14,
-                  color: isSelected ? AppColors.gold : AppColors.textSecondary,
+                  color: isSelected ? context.appColors.gold : context.appColors.textSecondary,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: isSelected ? AppColors.gold : AppColors.textSecondary,
+                        color: isSelected ? context.appColors.gold : context.appColors.textSecondary,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.2,
                       ),
@@ -389,7 +390,7 @@ class _ProgramHeader extends StatelessWidget {
               Text(
                 'Week ${vm.weekNumber}',
                 style: tt.headlineLarge?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontWeight: FontWeight.bold,
                   height: 1.1,
                 ),
@@ -397,7 +398,7 @@ class _ProgramHeader extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 'of 24 weeks',
-                style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
+                style: tt.bodySmall?.copyWith(color: context.appColors.textSecondary),
               ),
             ],
           ),
@@ -420,8 +421,8 @@ class _PhaseBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDeload ? AppColors.deload : AppColors.phaseColor(phase);
-    final muted = isDeload ? AppColors.deloadMuted : AppColors.phaseMutedColor(phase);
+    final color = isDeload ? context.appColors.deload : context.appColors.phaseColor(phase);
+    final muted = isDeload ? context.appColors.deloadMuted : context.appColors.phaseMutedColor(phase);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
@@ -496,15 +497,15 @@ class _ComingSoonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.phaseColor(phase.number);
+    final color = context.appColors.phaseColor(phase.number);
     final tt = Theme.of(context).textTheme;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -544,14 +545,14 @@ class _ComingSoonCard extends StatelessWidget {
                 ),
               ),
               Icon(Icons.lock_outline,
-                  size: 18, color: AppColors.textSecondary.withAlpha(180)),
+                  size: 18, color: context.appColors.textSecondary.withAlpha(180)),
             ],
           ),
           const SizedBox(height: 16),
           Text(
             blurb,
             style: tt.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: context.appColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -559,7 +560,7 @@ class _ComingSoonCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
+              color: context.appColors.surfaceVariant,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -567,7 +568,7 @@ class _ComingSoonCard extends StatelessWidget {
                   ? 'Weeks ${phase.startWeek}–${phase.endWeek}'
                   : 'Unlocks · Weeks ${phase.startWeek}–${phase.endWeek}',
               style: tt.labelSmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.appColors.textSecondary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -584,42 +585,103 @@ class _OtherPhaseAvailableCard extends StatelessWidget {
 
   const _OtherPhaseAvailableCard({required this.phase, required this.section});
 
+  static const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.phaseColor(phase.number);
+    final color = context.appColors.phaseColor(phase.number);
     final tt = Theme.of(context).textTheme;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: color.withAlpha(50)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'PHASE ${phase.number} · ${phase.name.toUpperCase()}',
-            style: tt.labelSmall?.copyWith(
-              color: color,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.bold,
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color.withAlpha(22),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    '${phase.number}',
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'PHASE ${phase.number} · ${phase.name.toUpperCase()}',
+                      style: tt.labelSmall?.copyWith(
+                        color: color,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      section == _HomeSection.workout
+                          ? 'Browse this phase in detail'
+                          : 'Meal plan for this phase',
+                      style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (section == _HomeSection.workout) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: List.generate(5, (i) {
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: i < 4 ? 6 : 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: color.withAlpha(15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: color.withAlpha(40)),
+                      ),
+                      child: Text(
+                        _dayLabels[i],
+                        style: tt.labelSmall?.copyWith(
+                          color: color.withAlpha(180),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                );
+              }),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            section == _HomeSection.workout
-                ? 'Browse this phase in detail'
-                : 'Meal plan for this phase',
-            style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
+          ],
+          const SizedBox(height: 14),
           Text(
             'Your active phase is different. Open the Program tab to see the '
             'full schedule for Phase ${phase.number}.',
             style: tt.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: context.appColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -652,45 +714,92 @@ class _RestDayBanner extends StatelessWidget {
     return n[weekday - 1];
   }
 
+  static const _recoveryTips = [
+    '🧘  Light stretching or yoga (15–20 min)',
+    '🚶  Walk for 20–30 minutes at an easy pace',
+    '🧻  Foam roll tight muscle groups',
+    '💤  Prioritise 7–9 hours of sleep tonight',
+    '🥤  Stay hydrated — aim for 2–3 L of water',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final day = _dayName(DateTime.now().weekday);
+    // Rotate tip based on day-of-year for variety.
+    final tipIndex = DateTime.now().difference(DateTime(DateTime.now().year)).inDays % _recoveryTips.length;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.self_improvement,
-                color: AppColors.textSecondary, size: 24),
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: context.appColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.self_improvement,
+                    color: context.appColors.textSecondary, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'REST — $day'.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: context.appColors.textSecondary,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Recovery day. Tap any session below to log it.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: context.appColors.phase4.withAlpha(12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: context.appColors.phase4.withAlpha(40)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'REST — $day'.toUpperCase(),
+                  'ACTIVE RECOVERY TIP',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        letterSpacing: 1.5,
+                        color: context.appColors.phase4,
+                        letterSpacing: 1.2,
                         fontWeight: FontWeight.bold,
+                        fontSize: 9,
                       ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 6),
                 Text(
-                  'Recovery day. Tap any session below to log it.',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  _recoveryTips[tipIndex],
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.appColors.textPrimary,
+                        height: 1.4,
+                      ),
                 ),
               ],
             ),
@@ -701,7 +810,7 @@ class _RestDayBanner extends StatelessWidget {
   }
 }
 
-class _TodayCard extends StatelessWidget {
+class _TodayCard extends ConsumerWidget {
   final HomeViewModel vm;
   const _TodayCard({required this.vm});
 
@@ -711,19 +820,23 @@ class _TodayCard extends StatelessWidget {
     return n[weekday - 1];
   }
 
+  Future<void> _confirmQuit(BuildContext context, WidgetRef ref, int workoutLogId) =>
+      confirmQuitSession(context, ref, workoutLogId);
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final session = vm.todaySession!;
     final day = _dayName(DateTime.now().weekday);
     final isDone = vm.isSessionDone(session.id);
+    final inProgress = vm.inProgressTodayLog;
     final tt = Theme.of(context).textTheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDone ? AppColors.gold.withAlpha(60) : AppColors.divider,
+          color: isDone ? context.appColors.gold.withAlpha(60) : context.appColors.divider,
         ),
       ),
       child: Column(
@@ -732,20 +845,20 @@ class _TodayCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.gold.withAlpha(18),
+              color: context.appColors.gold.withAlpha(18),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(15)),
               border: Border(
-                  bottom: BorderSide(color: AppColors.gold.withAlpha(40))),
+                  bottom: BorderSide(color: context.appColors.gold.withAlpha(40))),
             ),
             child: Row(
               children: [
-                const Icon(Icons.bolt, size: 14, color: AppColors.gold),
+                Icon(Icons.bolt, size: 14, color: context.appColors.gold),
                 const SizedBox(width: 6),
                 Text(
                   'TODAY — ${day.toUpperCase()}',
                   style: tt.labelSmall?.copyWith(
-                    color: AppColors.gold,
+                    color: context.appColors.gold,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.4,
                   ),
@@ -756,18 +869,42 @@ class _TodayCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.gold.withAlpha(30),
+                      color: context.appColors.gold.withAlpha(30),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.check, size: 11, color: AppColors.gold),
+                        Icon(Icons.check, size: 11, color: context.appColors.gold),
                         const SizedBox(width: 4),
                         Text(
                           'DONE',
                           style: tt.labelSmall?.copyWith(
-                            color: AppColors.gold,
+                            color: context.appColors.gold,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (inProgress != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: context.appColors.phase1.withAlpha(30),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.pause_circle_outline, size: 11, color: context.appColors.phase1),
+                        const SizedBox(width: 4),
+                        Text(
+                          'IN PROGRESS',
+                          style: tt.labelSmall?.copyWith(
+                            color: context.appColors.phase1,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -803,16 +940,45 @@ class _TodayCard extends StatelessWidget {
                         icon: Icons.bar_chart,
                         label:
                             '${vm.completedThisWeek}/5 this week'),
+                    if (vm.totalCompletedSessions > 0) ...[
+                      const SizedBox(width: 10),
+                      _Chip(
+                          icon: Icons.emoji_events_outlined,
+                          label: '${vm.totalCompletedSessions} total'),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/session/${session.id}'),
-                    child: Text(isDone ? 'VIEW SESSION' : 'START SESSION'),
+                if (inProgress != null) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => context.go('/session/${session.id}/active'),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                          label: const Text('RESUME'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton(
+                        onPressed: () => _confirmQuit(context, ref, inProgress.id),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: context.appColors.error,
+                          side: BorderSide(color: context.appColors.error),
+                        ),
+                        child: const Text('QUIT'),
+                      ),
+                    ],
                   ),
-                ),
+                ] else ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => context.go('/session/${session.id}'),
+                      child: Text(isDone ? 'VIEW SESSION' : 'START SESSION'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -832,7 +998,7 @@ class _Chip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: AppColors.textSecondary),
+        Icon(icon, size: 13, color: context.appColors.textSecondary),
         const SizedBox(width: 5),
         Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
@@ -864,7 +1030,7 @@ class _WeekSection extends StatelessWidget {
             Text(
               'THIS WEEK',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.appColors.textSecondary,
                     letterSpacing: 1.5,
                     fontWeight: FontWeight.bold,
                   ),
@@ -874,8 +1040,8 @@ class _WeekSection extends StatelessWidget {
               '${vm.completedThisWeek} of 5 done',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: vm.completedThisWeek > 0
-                        ? AppColors.gold
-                        : AppColors.textSecondary,
+                        ? context.appColors.gold
+                        : context.appColors.textSecondary,
                   ),
             ),
           ],
@@ -888,11 +1054,14 @@ class _WeekSection extends StatelessWidget {
           final isDone = session != null && vm.isSessionDone(session.id);
           final isPast = weekday < todayWeekday;
 
+          final isInProgress = session != null &&
+              vm.inProgressLogBySessionId.containsKey(session.id);
           return _WeekDayTile(
             dayLabel: _dayLabels[i],
             session: session,
             isToday: isToday,
             isDone: isDone,
+            isInProgress: isInProgress,
             isPast: isPast,
             onTap: session != null
                 ? () => context.go('/session/${session.id}')
@@ -911,7 +1080,7 @@ class _WeekSection extends StatelessWidget {
               Text(
                 'Rest / Active Recovery',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary.withAlpha(140),
+                      color: context.appColors.textSecondary.withAlpha(140),
                       fontSize: 11,
                     ),
               ),
@@ -928,6 +1097,7 @@ class _WeekDayTile extends StatelessWidget {
   final Session? session;
   final bool isToday;
   final bool isDone;
+  final bool isInProgress;
   final bool isPast;
   final VoidCallback? onTap;
 
@@ -936,6 +1106,7 @@ class _WeekDayTile extends StatelessWidget {
     required this.session,
     required this.isToday,
     required this.isDone,
+    required this.isInProgress,
     required this.isPast,
     required this.onTap,
   });
@@ -948,17 +1119,17 @@ class _WeekDayTile extends StatelessWidget {
     final Color bgColor;
 
     if (isDone) {
-      accentColor = AppColors.gold;
-      borderColor = AppColors.gold.withAlpha(60);
-      bgColor = AppColors.gold.withAlpha(12);
+      accentColor = context.appColors.gold;
+      borderColor = context.appColors.gold.withAlpha(60);
+      bgColor = context.appColors.gold.withAlpha(12);
     } else if (isToday) {
-      accentColor = AppColors.gold;
-      borderColor = AppColors.gold.withAlpha(100);
-      bgColor = AppColors.surface;
+      accentColor = context.appColors.gold;
+      borderColor = context.appColors.gold.withAlpha(100);
+      bgColor = context.appColors.surface;
     } else {
-      accentColor = AppColors.textSecondary;
-      borderColor = AppColors.divider;
-      bgColor = AppColors.surface;
+      accentColor = context.appColors.textSecondary;
+      borderColor = context.appColors.divider;
+      bgColor = context.appColors.surface;
     }
 
     final borderRadius = BorderRadius.circular(12);
@@ -984,10 +1155,10 @@ class _WeekDayTile extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 5),
                   decoration: BoxDecoration(
                     color: isDone
-                        ? AppColors.gold.withAlpha(25)
+                        ? context.appColors.gold.withAlpha(25)
                         : isToday
-                            ? AppColors.gold.withAlpha(20)
-                            : AppColors.surfaceVariant,
+                            ? context.appColors.gold.withAlpha(20)
+                            : context.appColors.surfaceVariant,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Column(
@@ -1008,7 +1179,7 @@ class _WeekDayTile extends StatelessWidget {
                           width: 4,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: AppColors.gold,
+                            color: context.appColors.gold,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -1025,7 +1196,7 @@ class _WeekDayTile extends StatelessWidget {
                             Text(
                               session!.name,
                               style: tt.bodyMedium?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: context.appColors.textPrimary,
                                 fontWeight: isToday
                                     ? FontWeight.w600
                                     : FontWeight.normal,
@@ -1037,22 +1208,25 @@ class _WeekDayTile extends StatelessWidget {
                             Text(
                               '~${session!.estimatedMinutes} min',
                               style: tt.labelSmall
-                                  ?.copyWith(color: AppColors.textSecondary),
+                                  ?.copyWith(color: context.appColors.textSecondary),
                             ),
                           ],
                         )
                       : Text(
                           'Rest day',
                           style: tt.bodyMedium
-                              ?.copyWith(color: AppColors.textSecondary),
+                              ?.copyWith(color: context.appColors.textSecondary),
                         ),
                 ),
                 if (session != null)
                   isDone
-                      ? const Icon(Icons.check_circle,
-                          color: AppColors.gold, size: 20)
-                      : Icon(Icons.chevron_right,
-                          color: accentColor.withAlpha(150), size: 20),
+                      ? Icon(Icons.check_circle,
+                          color: context.appColors.gold, size: 20)
+                      : isInProgress
+                          ? Icon(Icons.pause_circle_outline,
+                              color: context.appColors.phase1.withAlpha(200), size: 20)
+                          : Icon(Icons.chevron_right,
+                              color: accentColor.withAlpha(150), size: 20),
               ],
             ),
           ),
@@ -1071,14 +1245,14 @@ class _WeekendDot extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.textSecondary.withAlpha(140),
+              color: context.appColors.textSecondary.withAlpha(140),
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),

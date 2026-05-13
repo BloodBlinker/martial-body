@@ -14,3 +14,6 @@ docs/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Local debug/error output
+error_latest.txt

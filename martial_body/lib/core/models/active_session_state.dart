@@ -25,20 +25,25 @@ class ActiveSessionState {
   final Map<String, bool> setsDone;
   final Map<String, String> weightDrafts;
   final Map<String, String> repsDrafts;
+  final Map<String, String> rightRepsDrafts;
 
-  /// Last prior completed SetLog per exerciseId. Used to render the
-  /// "Last: 60kg × 8" hint on set rows so the user can easily repeat or
-  /// progressively overload.
+  /// Last prior completed SetLog per exerciseId.
   final Map<int, SetLog> lastByExerciseId;
+
+  /// The real start time of this workout (from the DB). Used to anchor the
+  /// session timer so it survives resume / screen re-creation.
+  final DateTime sessionStartedAt;
 
   const ActiveSessionState({
     required this.workoutLogId,
     required this.sessionDetail,
     required this.allExercises,
     required this.currentExerciseIndex,
+    required this.sessionStartedAt,
     this.setsDone = const {},
     this.weightDrafts = const {},
     this.repsDrafts = const {},
+    this.rightRepsDrafts = const {},
     this.lastByExerciseId = const {},
   });
 
@@ -47,16 +52,16 @@ class ActiveSessionState {
   bool isDone(int beId, int setNum) => setsDone[key(beId, setNum)] ?? false;
   String weightFor(int beId, int setNum) => weightDrafts[key(beId, setNum)] ?? '';
   String repsFor(int beId, int setNum) => repsDrafts[key(beId, setNum)] ?? '';
+  String rightRepsFor(int beId, int setNum) => rightRepsDrafts[key(beId, setNum)] ?? '';
 
   BlockExerciseDetail get currentExercise => allExercises[currentExerciseIndex];
 
+  /// Look up the block index by matching blockExercise.blockId — works for
+  /// both real and synthetic (cardio placeholder) entries.
   int get currentBlockIndex {
-    int idx = 0;
+    final targetBlockId = allExercises[currentExerciseIndex].blockExercise.blockId;
     for (int bi = 0; bi < sessionDetail.blocks.length; bi++) {
-      for (int ei = 0; ei < sessionDetail.blocks[bi].exercises.length; ei++) {
-        if (idx == currentExerciseIndex) return bi;
-        idx++;
-      }
+      if (sessionDetail.blocks[bi].block.id == targetBlockId) return bi;
     }
     return 0;
   }
@@ -74,16 +79,19 @@ class ActiveSessionState {
     Map<String, bool>? setsDone,
     Map<String, String>? weightDrafts,
     Map<String, String>? repsDrafts,
+    Map<String, String>? rightRepsDrafts,
     Map<int, SetLog>? lastByExerciseId,
   }) {
     return ActiveSessionState(
       workoutLogId: workoutLogId,
       sessionDetail: sessionDetail,
       allExercises: allExercises,
+      sessionStartedAt: sessionStartedAt,
       currentExerciseIndex: currentExerciseIndex ?? this.currentExerciseIndex,
       setsDone: setsDone ?? this.setsDone,
       weightDrafts: weightDrafts ?? this.weightDrafts,
       repsDrafts: repsDrafts ?? this.repsDrafts,
+      rightRepsDrafts: rightRepsDrafts ?? this.rightRepsDrafts,
       lastByExerciseId: lastByExerciseId ?? this.lastByExerciseId,
     );
   }

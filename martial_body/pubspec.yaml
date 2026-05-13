@@ -1,7 +1,7 @@
 name: martial_body
 description: 24-week MMA preparation program — fully offline.
 publish_to: none
-version: 1.0.0+1
+version: 1.5.0+2
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -20,9 +20,13 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.24
   path_provider: ^2.1.4
   path: ^1.9.0
+  # Theme persistence
+  shared_preferences: ^2.0.0
   # Share the user's exported CSV from the Profile tab.
   # (url_launcher removed — all outbound links replaced with in-app display)
   share_plus: ^10.1.2
+  # Keep screen on during active session — standard workout-app requirement.
+  wakelock_plus: ^1.1.1
 
 dev_dependencies:
   flutter_test:

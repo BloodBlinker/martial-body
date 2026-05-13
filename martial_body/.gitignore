@@ -49,3 +49,6 @@ app.*.map.json
 /android/app/upload-keystore.jks
 /android/app/*.jks
 **/martial-body-upload.jks
+
+# Local debug/analysis output
+analyze_output.txt

@@ -159,7 +159,7 @@ class _ProgramScreenState extends ConsumerState<ProgramScreen>
     final currentWeek = homeAsync.value?.weekNumber ?? 1;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,14 +206,14 @@ class _Header extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: AppColors.phase1Muted,
+              color: context.appColors.phase1Muted,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.phase1.withAlpha(80)),
+              border: Border.all(color: context.appColors.phase1.withAlpha(80)),
             ),
             child: Text(
               '24 Weeks',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.phase1,
+                    color: context.appColors.phase1,
                     fontWeight: FontWeight.bold,
                   ),
             ),
@@ -253,7 +253,7 @@ class _PhaseTabsState extends State<_PhaseTabs> {
       isScrollable: false,
       indicatorSize: TabBarIndicatorSize.tab,
       indicatorPadding: const EdgeInsets.symmetric(horizontal: 4),
-      dividerColor: AppColors.divider,
+      dividerColor: context.appColors.divider,
       indicatorColor: colors[idx],
       labelColor: colors[idx],
       tabs: List.generate(4, (i) {
@@ -264,7 +264,7 @@ class _PhaseTabsState extends State<_PhaseTabs> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: selected ? colors[i] : AppColors.textSecondary,
+              color: selected ? colors[i] : context.appColors.textSecondary,
             ),
           ),
         );
@@ -327,7 +327,7 @@ class _PhaseHeader extends StatelessWidget {
         isActivePhase ? phase.color : phase.color.withAlpha(50);
 
     return Material(
-      color: AppColors.surface,
+      color: context.appColors.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -425,7 +425,7 @@ class _WeekColumnHeaders extends StatelessWidget {
             child: Text(
               h,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.appColors.textSecondary,
                     letterSpacing: 0.5,
                   ),
               textAlign: TextAlign.center,
@@ -462,20 +462,20 @@ class _WeekRow extends StatelessWidget {
     final Color rowBg;
 
     if (isCurrent && isDeload) {
-      rowBg = AppColors.deloadMuted;
-      borderColor = AppColors.deload;
+      rowBg = context.appColors.deloadMuted;
+      borderColor = context.appColors.deload;
     } else if (isCurrent) {
-      rowBg = AppColors.surface;
+      rowBg = context.appColors.surface;
       borderColor = phaseColor;
     } else if (isDeload) {
-      rowBg = AppColors.deloadMuted;
-      borderColor = AppColors.deload.withAlpha(80);
+      rowBg = context.appColors.deloadMuted;
+      borderColor = context.appColors.deload.withAlpha(80);
     } else if (isComplete) {
-      rowBg = AppColors.surfaceVariant;
-      borderColor = AppColors.divider;
+      rowBg = context.appColors.surfaceVariant;
+      borderColor = context.appColors.divider;
     } else {
-      rowBg = AppColors.surface;
-      borderColor = AppColors.divider;
+      rowBg = context.appColors.surface;
+      borderColor = context.appColors.divider;
     }
 
     return Container(
@@ -502,8 +502,8 @@ class _WeekRow extends StatelessWidget {
                         color: isCurrent
                             ? phaseColor
                             : isDeload
-                                ? AppColors.deload
-                                : AppColors.textSecondary,
+                                ? context.appColors.deload
+                                : context.appColors.textSecondary,
                         fontWeight: isCurrent
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -513,7 +513,7 @@ class _WeekRow extends StatelessWidget {
                   Text(
                     'DELOAD',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.deload,
+                          color: context.appColors.deload,
                           fontSize: 8,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
@@ -544,7 +544,7 @@ class _WeekRow extends StatelessWidget {
                       ? phaseColor.withAlpha(25)
                       : isCurrent
                           ? phaseColor.withAlpha(15)
-                          : AppColors.surfaceVariant,
+                          : context.appColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -555,7 +555,7 @@ class _WeekRow extends StatelessWidget {
                             ? phaseColor
                             : isCurrent
                                 ? phaseColor.withAlpha(200)
-                                : AppColors.textSecondary,
+                                : context.appColors.textSecondary,
                         height: 1.2,
                       ),
                   textAlign: TextAlign.center,
