@@ -2450,6 +2450,18 @@ class $SetLogsTable extends SetLogs with TableInfo<$SetLogsTable, SetLog> {
   late final GeneratedColumn<int> repsCompleted = GeneratedColumn<int>(
       'reps_completed', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _leftRepsCompletedMeta =
+      const VerificationMeta('leftRepsCompleted');
+  @override
+  late final GeneratedColumn<int> leftRepsCompleted = GeneratedColumn<int>(
+      'left_reps_completed', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _rightRepsCompletedMeta =
+      const VerificationMeta('rightRepsCompleted');
+  @override
+  late final GeneratedColumn<int> rightRepsCompleted = GeneratedColumn<int>(
+      'right_reps_completed', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _weightKgMeta =
       const VerificationMeta('weightKg');
   @override
@@ -2479,6 +2491,8 @@ class $SetLogsTable extends SetLogs with TableInfo<$SetLogsTable, SetLog> {
         blockExerciseId,
         setNumber,
         repsCompleted,
+        leftRepsCompleted,
+        rightRepsCompleted,
         weightKg,
         completed,
         completedAt
@@ -2524,6 +2538,18 @@ class $SetLogsTable extends SetLogs with TableInfo<$SetLogsTable, SetLog> {
           repsCompleted.isAcceptableOrUnknown(
               data['reps_completed']!, _repsCompletedMeta));
     }
+    if (data.containsKey('left_reps_completed')) {
+      context.handle(
+          _leftRepsCompletedMeta,
+          leftRepsCompleted.isAcceptableOrUnknown(
+              data['left_reps_completed']!, _leftRepsCompletedMeta));
+    }
+    if (data.containsKey('right_reps_completed')) {
+      context.handle(
+          _rightRepsCompletedMeta,
+          rightRepsCompleted.isAcceptableOrUnknown(
+              data['right_reps_completed']!, _rightRepsCompletedMeta));
+    }
     if (data.containsKey('weight_kg')) {
       context.handle(_weightKgMeta,
           weightKg.isAcceptableOrUnknown(data['weight_kg']!, _weightKgMeta));
@@ -2557,6 +2583,10 @@ class $SetLogsTable extends SetLogs with TableInfo<$SetLogsTable, SetLog> {
           .read(DriftSqlType.int, data['${effectivePrefix}set_number'])!,
       repsCompleted: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}reps_completed']),
+      leftRepsCompleted: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}left_reps_completed']),
+      rightRepsCompleted: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}right_reps_completed']),
       weightKg: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}weight_kg']),
       completed: attachedDatabase.typeMapping
@@ -2578,6 +2608,8 @@ class SetLog extends DataClass implements Insertable<SetLog> {
   final int blockExerciseId;
   final int setNumber;
   final int? repsCompleted;
+  final int? leftRepsCompleted;
+  final int? rightRepsCompleted;
   final double? weightKg;
   final bool completed;
   final DateTime? completedAt;
@@ -2587,6 +2619,8 @@ class SetLog extends DataClass implements Insertable<SetLog> {
       required this.blockExerciseId,
       required this.setNumber,
       this.repsCompleted,
+      this.leftRepsCompleted,
+      this.rightRepsCompleted,
       this.weightKg,
       required this.completed,
       this.completedAt});
@@ -2599,6 +2633,12 @@ class SetLog extends DataClass implements Insertable<SetLog> {
     map['set_number'] = Variable<int>(setNumber);
     if (!nullToAbsent || repsCompleted != null) {
       map['reps_completed'] = Variable<int>(repsCompleted);
+    }
+    if (!nullToAbsent || leftRepsCompleted != null) {
+      map['left_reps_completed'] = Variable<int>(leftRepsCompleted);
+    }
+    if (!nullToAbsent || rightRepsCompleted != null) {
+      map['right_reps_completed'] = Variable<int>(rightRepsCompleted);
     }
     if (!nullToAbsent || weightKg != null) {
       map['weight_kg'] = Variable<double>(weightKg);
@@ -2619,6 +2659,12 @@ class SetLog extends DataClass implements Insertable<SetLog> {
       repsCompleted: repsCompleted == null && nullToAbsent
           ? const Value.absent()
           : Value(repsCompleted),
+      leftRepsCompleted: leftRepsCompleted == null && nullToAbsent
+          ? const Value.absent()
+          : Value(leftRepsCompleted),
+      rightRepsCompleted: rightRepsCompleted == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rightRepsCompleted),
       weightKg: weightKg == null && nullToAbsent
           ? const Value.absent()
           : Value(weightKg),
@@ -2638,6 +2684,8 @@ class SetLog extends DataClass implements Insertable<SetLog> {
       blockExerciseId: serializer.fromJson<int>(json['blockExerciseId']),
       setNumber: serializer.fromJson<int>(json['setNumber']),
       repsCompleted: serializer.fromJson<int?>(json['repsCompleted']),
+      leftRepsCompleted: serializer.fromJson<int?>(json['leftRepsCompleted']),
+      rightRepsCompleted: serializer.fromJson<int?>(json['rightRepsCompleted']),
       weightKg: serializer.fromJson<double?>(json['weightKg']),
       completed: serializer.fromJson<bool>(json['completed']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
@@ -2652,6 +2700,8 @@ class SetLog extends DataClass implements Insertable<SetLog> {
       'blockExerciseId': serializer.toJson<int>(blockExerciseId),
       'setNumber': serializer.toJson<int>(setNumber),
       'repsCompleted': serializer.toJson<int?>(repsCompleted),
+      'leftRepsCompleted': serializer.toJson<int?>(leftRepsCompleted),
+      'rightRepsCompleted': serializer.toJson<int?>(rightRepsCompleted),
       'weightKg': serializer.toJson<double?>(weightKg),
       'completed': serializer.toJson<bool>(completed),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
@@ -2664,6 +2714,8 @@ class SetLog extends DataClass implements Insertable<SetLog> {
           int? blockExerciseId,
           int? setNumber,
           Value<int?> repsCompleted = const Value.absent(),
+          Value<int?> leftRepsCompleted = const Value.absent(),
+          Value<int?> rightRepsCompleted = const Value.absent(),
           Value<double?> weightKg = const Value.absent(),
           bool? completed,
           Value<DateTime?> completedAt = const Value.absent()}) =>
@@ -2674,6 +2726,12 @@ class SetLog extends DataClass implements Insertable<SetLog> {
         setNumber: setNumber ?? this.setNumber,
         repsCompleted:
             repsCompleted.present ? repsCompleted.value : this.repsCompleted,
+        leftRepsCompleted: leftRepsCompleted.present
+            ? leftRepsCompleted.value
+            : this.leftRepsCompleted,
+        rightRepsCompleted: rightRepsCompleted.present
+            ? rightRepsCompleted.value
+            : this.rightRepsCompleted,
         weightKg: weightKg.present ? weightKg.value : this.weightKg,
         completed: completed ?? this.completed,
         completedAt: completedAt.present ? completedAt.value : this.completedAt,
@@ -2691,6 +2749,12 @@ class SetLog extends DataClass implements Insertable<SetLog> {
       repsCompleted: data.repsCompleted.present
           ? data.repsCompleted.value
           : this.repsCompleted,
+      leftRepsCompleted: data.leftRepsCompleted.present
+          ? data.leftRepsCompleted.value
+          : this.leftRepsCompleted,
+      rightRepsCompleted: data.rightRepsCompleted.present
+          ? data.rightRepsCompleted.value
+          : this.rightRepsCompleted,
       weightKg: data.weightKg.present ? data.weightKg.value : this.weightKg,
       completed: data.completed.present ? data.completed.value : this.completed,
       completedAt:
@@ -2706,6 +2770,8 @@ class SetLog extends DataClass implements Insertable<SetLog> {
           ..write('blockExerciseId: $blockExerciseId, ')
           ..write('setNumber: $setNumber, ')
           ..write('repsCompleted: $repsCompleted, ')
+          ..write('leftRepsCompleted: $leftRepsCompleted, ')
+          ..write('rightRepsCompleted: $rightRepsCompleted, ')
           ..write('weightKg: $weightKg, ')
           ..write('completed: $completed, ')
           ..write('completedAt: $completedAt')
@@ -2714,8 +2780,17 @@ class SetLog extends DataClass implements Insertable<SetLog> {
   }
 
   @override
-  int get hashCode => Object.hash(id, workoutLogId, blockExerciseId, setNumber,
-      repsCompleted, weightKg, completed, completedAt);
+  int get hashCode => Object.hash(
+      id,
+      workoutLogId,
+      blockExerciseId,
+      setNumber,
+      repsCompleted,
+      leftRepsCompleted,
+      rightRepsCompleted,
+      weightKg,
+      completed,
+      completedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2725,6 +2800,8 @@ class SetLog extends DataClass implements Insertable<SetLog> {
           other.blockExerciseId == this.blockExerciseId &&
           other.setNumber == this.setNumber &&
           other.repsCompleted == this.repsCompleted &&
+          other.leftRepsCompleted == this.leftRepsCompleted &&
+          other.rightRepsCompleted == this.rightRepsCompleted &&
           other.weightKg == this.weightKg &&
           other.completed == this.completed &&
           other.completedAt == this.completedAt);
@@ -2736,6 +2813,8 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
   final Value<int> blockExerciseId;
   final Value<int> setNumber;
   final Value<int?> repsCompleted;
+  final Value<int?> leftRepsCompleted;
+  final Value<int?> rightRepsCompleted;
   final Value<double?> weightKg;
   final Value<bool> completed;
   final Value<DateTime?> completedAt;
@@ -2745,6 +2824,8 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
     this.blockExerciseId = const Value.absent(),
     this.setNumber = const Value.absent(),
     this.repsCompleted = const Value.absent(),
+    this.leftRepsCompleted = const Value.absent(),
+    this.rightRepsCompleted = const Value.absent(),
     this.weightKg = const Value.absent(),
     this.completed = const Value.absent(),
     this.completedAt = const Value.absent(),
@@ -2755,6 +2836,8 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
     required int blockExerciseId,
     required int setNumber,
     this.repsCompleted = const Value.absent(),
+    this.leftRepsCompleted = const Value.absent(),
+    this.rightRepsCompleted = const Value.absent(),
     this.weightKg = const Value.absent(),
     this.completed = const Value.absent(),
     this.completedAt = const Value.absent(),
@@ -2767,6 +2850,8 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
     Expression<int>? blockExerciseId,
     Expression<int>? setNumber,
     Expression<int>? repsCompleted,
+    Expression<int>? leftRepsCompleted,
+    Expression<int>? rightRepsCompleted,
     Expression<double>? weightKg,
     Expression<bool>? completed,
     Expression<DateTime>? completedAt,
@@ -2777,6 +2862,9 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
       if (blockExerciseId != null) 'block_exercise_id': blockExerciseId,
       if (setNumber != null) 'set_number': setNumber,
       if (repsCompleted != null) 'reps_completed': repsCompleted,
+      if (leftRepsCompleted != null) 'left_reps_completed': leftRepsCompleted,
+      if (rightRepsCompleted != null)
+        'right_reps_completed': rightRepsCompleted,
       if (weightKg != null) 'weight_kg': weightKg,
       if (completed != null) 'completed': completed,
       if (completedAt != null) 'completed_at': completedAt,
@@ -2789,6 +2877,8 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
       Value<int>? blockExerciseId,
       Value<int>? setNumber,
       Value<int?>? repsCompleted,
+      Value<int?>? leftRepsCompleted,
+      Value<int?>? rightRepsCompleted,
       Value<double?>? weightKg,
       Value<bool>? completed,
       Value<DateTime?>? completedAt}) {
@@ -2798,6 +2888,8 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
       blockExerciseId: blockExerciseId ?? this.blockExerciseId,
       setNumber: setNumber ?? this.setNumber,
       repsCompleted: repsCompleted ?? this.repsCompleted,
+      leftRepsCompleted: leftRepsCompleted ?? this.leftRepsCompleted,
+      rightRepsCompleted: rightRepsCompleted ?? this.rightRepsCompleted,
       weightKg: weightKg ?? this.weightKg,
       completed: completed ?? this.completed,
       completedAt: completedAt ?? this.completedAt,
@@ -2822,6 +2914,12 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
     if (repsCompleted.present) {
       map['reps_completed'] = Variable<int>(repsCompleted.value);
     }
+    if (leftRepsCompleted.present) {
+      map['left_reps_completed'] = Variable<int>(leftRepsCompleted.value);
+    }
+    if (rightRepsCompleted.present) {
+      map['right_reps_completed'] = Variable<int>(rightRepsCompleted.value);
+    }
     if (weightKg.present) {
       map['weight_kg'] = Variable<double>(weightKg.value);
     }
@@ -2842,6 +2940,8 @@ class SetLogsCompanion extends UpdateCompanion<SetLog> {
           ..write('blockExerciseId: $blockExerciseId, ')
           ..write('setNumber: $setNumber, ')
           ..write('repsCompleted: $repsCompleted, ')
+          ..write('leftRepsCompleted: $leftRepsCompleted, ')
+          ..write('rightRepsCompleted: $rightRepsCompleted, ')
           ..write('weightKg: $weightKg, ')
           ..write('completed: $completed, ')
           ..write('completedAt: $completedAt')
@@ -3415,6 +3515,222 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
   }
 }
 
+class $UserWeightsTable extends UserWeights
+    with TableInfo<$UserWeightsTable, UserWeight> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserWeightsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
+      'date', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _weightKgMeta =
+      const VerificationMeta('weightKg');
+  @override
+  late final GeneratedColumn<double> weightKg = GeneratedColumn<double>(
+      'weight_kg', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, date, weightKg];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_weights';
+  @override
+  VerificationContext validateIntegrity(Insertable<UserWeight> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+          _dateMeta, date.isAcceptableOrUnknown(data['date']!, _dateMeta));
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('weight_kg')) {
+      context.handle(_weightKgMeta,
+          weightKg.isAcceptableOrUnknown(data['weight_kg']!, _weightKgMeta));
+    } else if (isInserting) {
+      context.missing(_weightKgMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserWeight map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserWeight(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      date: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
+      weightKg: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}weight_kg'])!,
+    );
+  }
+
+  @override
+  $UserWeightsTable createAlias(String alias) {
+    return $UserWeightsTable(attachedDatabase, alias);
+  }
+}
+
+class UserWeight extends DataClass implements Insertable<UserWeight> {
+  final int id;
+  final DateTime date;
+  final double weightKg;
+  const UserWeight(
+      {required this.id, required this.date, required this.weightKg});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['date'] = Variable<DateTime>(date);
+    map['weight_kg'] = Variable<double>(weightKg);
+    return map;
+  }
+
+  UserWeightsCompanion toCompanion(bool nullToAbsent) {
+    return UserWeightsCompanion(
+      id: Value(id),
+      date: Value(date),
+      weightKg: Value(weightKg),
+    );
+  }
+
+  factory UserWeight.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserWeight(
+      id: serializer.fromJson<int>(json['id']),
+      date: serializer.fromJson<DateTime>(json['date']),
+      weightKg: serializer.fromJson<double>(json['weightKg']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'date': serializer.toJson<DateTime>(date),
+      'weightKg': serializer.toJson<double>(weightKg),
+    };
+  }
+
+  UserWeight copyWith({int? id, DateTime? date, double? weightKg}) =>
+      UserWeight(
+        id: id ?? this.id,
+        date: date ?? this.date,
+        weightKg: weightKg ?? this.weightKg,
+      );
+  UserWeight copyWithCompanion(UserWeightsCompanion data) {
+    return UserWeight(
+      id: data.id.present ? data.id.value : this.id,
+      date: data.date.present ? data.date.value : this.date,
+      weightKg: data.weightKg.present ? data.weightKg.value : this.weightKg,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserWeight(')
+          ..write('id: $id, ')
+          ..write('date: $date, ')
+          ..write('weightKg: $weightKg')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, date, weightKg);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserWeight &&
+          other.id == this.id &&
+          other.date == this.date &&
+          other.weightKg == this.weightKg);
+}
+
+class UserWeightsCompanion extends UpdateCompanion<UserWeight> {
+  final Value<int> id;
+  final Value<DateTime> date;
+  final Value<double> weightKg;
+  const UserWeightsCompanion({
+    this.id = const Value.absent(),
+    this.date = const Value.absent(),
+    this.weightKg = const Value.absent(),
+  });
+  UserWeightsCompanion.insert({
+    this.id = const Value.absent(),
+    required DateTime date,
+    required double weightKg,
+  })  : date = Value(date),
+        weightKg = Value(weightKg);
+  static Insertable<UserWeight> custom({
+    Expression<int>? id,
+    Expression<DateTime>? date,
+    Expression<double>? weightKg,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (date != null) 'date': date,
+      if (weightKg != null) 'weight_kg': weightKg,
+    });
+  }
+
+  UserWeightsCompanion copyWith(
+      {Value<int>? id, Value<DateTime>? date, Value<double>? weightKg}) {
+    return UserWeightsCompanion(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      weightKg: weightKg ?? this.weightKg,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<DateTime>(date.value);
+    }
+    if (weightKg.present) {
+      map['weight_kg'] = Variable<double>(weightKg.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserWeightsCompanion(')
+          ..write('id: $id, ')
+          ..write('date: $date, ')
+          ..write('weightKg: $weightKg')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3427,6 +3743,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SetLogsTable setLogs = $SetLogsTable(this);
   late final $UserStateTableTable userStateTable = $UserStateTableTable(this);
   late final $UserProfilesTable userProfiles = $UserProfilesTable(this);
+  late final $UserWeightsTable userWeights = $UserWeightsTable(this);
   late final ProgramDao programDao = ProgramDao(this as AppDatabase);
   late final SessionDao sessionDao = SessionDao(this as AppDatabase);
   late final UserDao userDao = UserDao(this as AppDatabase);
@@ -3445,7 +3762,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         workoutLogs,
         setLogs,
         userStateTable,
-        userProfiles
+        userProfiles,
+        userWeights
       ];
 }
 
@@ -5669,6 +5987,8 @@ typedef $$SetLogsTableCreateCompanionBuilder = SetLogsCompanion Function({
   required int blockExerciseId,
   required int setNumber,
   Value<int?> repsCompleted,
+  Value<int?> leftRepsCompleted,
+  Value<int?> rightRepsCompleted,
   Value<double?> weightKg,
   Value<bool> completed,
   Value<DateTime?> completedAt,
@@ -5679,6 +5999,8 @@ typedef $$SetLogsTableUpdateCompanionBuilder = SetLogsCompanion Function({
   Value<int> blockExerciseId,
   Value<int> setNumber,
   Value<int?> repsCompleted,
+  Value<int?> leftRepsCompleted,
+  Value<int?> rightRepsCompleted,
   Value<double?> weightKg,
   Value<bool> completed,
   Value<DateTime?> completedAt,
@@ -5736,6 +6058,14 @@ class $$SetLogsTableFilterComposer
 
   ColumnFilters<int> get repsCompleted => $composableBuilder(
       column: $table.repsCompleted, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get leftRepsCompleted => $composableBuilder(
+      column: $table.leftRepsCompleted,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get rightRepsCompleted => $composableBuilder(
+      column: $table.rightRepsCompleted,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get weightKg => $composableBuilder(
       column: $table.weightKg, builder: (column) => ColumnFilters(column));
@@ -5806,6 +6136,14 @@ class $$SetLogsTableOrderingComposer
       column: $table.repsCompleted,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get leftRepsCompleted => $composableBuilder(
+      column: $table.leftRepsCompleted,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get rightRepsCompleted => $composableBuilder(
+      column: $table.rightRepsCompleted,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get weightKg => $composableBuilder(
       column: $table.weightKg, builder: (column) => ColumnOrderings(column));
 
@@ -5873,6 +6211,12 @@ class $$SetLogsTableAnnotationComposer
 
   GeneratedColumn<int> get repsCompleted => $composableBuilder(
       column: $table.repsCompleted, builder: (column) => column);
+
+  GeneratedColumn<int> get leftRepsCompleted => $composableBuilder(
+      column: $table.leftRepsCompleted, builder: (column) => column);
+
+  GeneratedColumn<int> get rightRepsCompleted => $composableBuilder(
+      column: $table.rightRepsCompleted, builder: (column) => column);
 
   GeneratedColumn<double> get weightKg =>
       $composableBuilder(column: $table.weightKg, builder: (column) => column);
@@ -5952,6 +6296,8 @@ class $$SetLogsTableTableManager extends RootTableManager<
             Value<int> blockExerciseId = const Value.absent(),
             Value<int> setNumber = const Value.absent(),
             Value<int?> repsCompleted = const Value.absent(),
+            Value<int?> leftRepsCompleted = const Value.absent(),
+            Value<int?> rightRepsCompleted = const Value.absent(),
             Value<double?> weightKg = const Value.absent(),
             Value<bool> completed = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
@@ -5962,6 +6308,8 @@ class $$SetLogsTableTableManager extends RootTableManager<
             blockExerciseId: blockExerciseId,
             setNumber: setNumber,
             repsCompleted: repsCompleted,
+            leftRepsCompleted: leftRepsCompleted,
+            rightRepsCompleted: rightRepsCompleted,
             weightKg: weightKg,
             completed: completed,
             completedAt: completedAt,
@@ -5972,6 +6320,8 @@ class $$SetLogsTableTableManager extends RootTableManager<
             required int blockExerciseId,
             required int setNumber,
             Value<int?> repsCompleted = const Value.absent(),
+            Value<int?> leftRepsCompleted = const Value.absent(),
+            Value<int?> rightRepsCompleted = const Value.absent(),
             Value<double?> weightKg = const Value.absent(),
             Value<bool> completed = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
@@ -5982,6 +6332,8 @@ class $$SetLogsTableTableManager extends RootTableManager<
             blockExerciseId: blockExerciseId,
             setNumber: setNumber,
             repsCompleted: repsCompleted,
+            leftRepsCompleted: leftRepsCompleted,
+            rightRepsCompleted: rightRepsCompleted,
             weightKg: weightKg,
             completed: completed,
             completedAt: completedAt,
@@ -6375,6 +6727,137 @@ typedef $$UserProfilesTableProcessedTableManager = ProcessedTableManager<
     ),
     UserProfile,
     PrefetchHooks Function()>;
+typedef $$UserWeightsTableCreateCompanionBuilder = UserWeightsCompanion
+    Function({
+  Value<int> id,
+  required DateTime date,
+  required double weightKg,
+});
+typedef $$UserWeightsTableUpdateCompanionBuilder = UserWeightsCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> date,
+  Value<double> weightKg,
+});
+
+class $$UserWeightsTableFilterComposer
+    extends Composer<_$AppDatabase, $UserWeightsTable> {
+  $$UserWeightsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get weightKg => $composableBuilder(
+      column: $table.weightKg, builder: (column) => ColumnFilters(column));
+}
+
+class $$UserWeightsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserWeightsTable> {
+  $$UserWeightsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get weightKg => $composableBuilder(
+      column: $table.weightKg, builder: (column) => ColumnOrderings(column));
+}
+
+class $$UserWeightsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserWeightsTable> {
+  $$UserWeightsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<double> get weightKg =>
+      $composableBuilder(column: $table.weightKg, builder: (column) => column);
+}
+
+class $$UserWeightsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $UserWeightsTable,
+    UserWeight,
+    $$UserWeightsTableFilterComposer,
+    $$UserWeightsTableOrderingComposer,
+    $$UserWeightsTableAnnotationComposer,
+    $$UserWeightsTableCreateCompanionBuilder,
+    $$UserWeightsTableUpdateCompanionBuilder,
+    (UserWeight, BaseReferences<_$AppDatabase, $UserWeightsTable, UserWeight>),
+    UserWeight,
+    PrefetchHooks Function()> {
+  $$UserWeightsTableTableManager(_$AppDatabase db, $UserWeightsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserWeightsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserWeightsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserWeightsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> date = const Value.absent(),
+            Value<double> weightKg = const Value.absent(),
+          }) =>
+              UserWeightsCompanion(
+            id: id,
+            date: date,
+            weightKg: weightKg,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required DateTime date,
+            required double weightKg,
+          }) =>
+              UserWeightsCompanion.insert(
+            id: id,
+            date: date,
+            weightKg: weightKg,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$UserWeightsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $UserWeightsTable,
+    UserWeight,
+    $$UserWeightsTableFilterComposer,
+    $$UserWeightsTableOrderingComposer,
+    $$UserWeightsTableAnnotationComposer,
+    $$UserWeightsTableCreateCompanionBuilder,
+    $$UserWeightsTableUpdateCompanionBuilder,
+    (UserWeight, BaseReferences<_$AppDatabase, $UserWeightsTable, UserWeight>),
+    UserWeight,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6397,4 +6880,6 @@ class $AppDatabaseManager {
       $$UserStateTableTableTableManager(_db, _db.userStateTable);
   $$UserProfilesTableTableManager get userProfiles =>
       $$UserProfilesTableTableManager(_db, _db.userProfiles);
+  $$UserWeightsTableTableManager get userWeights =>
+      $$UserWeightsTableTableManager(_db, _db.userWeights);
 }

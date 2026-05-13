@@ -15,9 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'core/theme/app_colors.dart';
+import 'core/providers/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
 import 'features/onboarding/intro_screen.dart';
@@ -28,6 +29,7 @@ import 'features/program/program_screen.dart';
 import 'features/session/active_session_screen.dart';
 import 'features/session/session_overview_screen.dart';
 import 'features/splash/splash_screen.dart';
+import 'package:martial_body/core/theme/app_colors.dart';
 
 int? _parseSessionId(GoRouterState state) =>
     int.tryParse(state.pathParameters['sessionId'] ?? '');
@@ -108,7 +110,7 @@ class _InvalidRouteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -116,14 +118,14 @@ class _InvalidRouteScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.error_outline,
-                  color: AppColors.textSecondary, size: 48),
+              Icon(Icons.error_outline,
+                  color: context.appColors.textSecondary, size: 48),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Page not found',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.bold),
               ),
@@ -131,8 +133,8 @@ class _InvalidRouteScreen extends StatelessWidget {
               Text(
                 uri,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: AppColors.textSecondary, fontSize: 13),
+                style: TextStyle(
+                    color: context.appColors.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -147,14 +149,17 @@ class _InvalidRouteScreen extends StatelessWidget {
   }
 }
 
-class MartialBodyApp extends StatelessWidget {
+class MartialBodyApp extends ConsumerWidget {
   const MartialBodyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: 'Martial Body',
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
     );
@@ -189,7 +194,7 @@ class _ScaffoldWithNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: child,
       bottomNavigationBar: _showNav ? _buildNavBar(context) : null,
     );
@@ -198,9 +203,9 @@ class _ScaffoldWithNav extends StatelessWidget {
   Widget _buildNavBar(BuildContext context) {
     return NavigationBar(
       selectedIndex: _selectedIndex,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.appColors.surface,
       surfaceTintColor: Colors.transparent,
-      indicatorColor: AppColors.phase1Muted,
+      indicatorColor: context.appColors.phase1Muted,
       height: 64,
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       onDestinationSelected: (index) {
@@ -215,25 +220,25 @@ class _ScaffoldWithNav extends StatelessWidget {
             context.go('/profile');
         }
       },
-      destinations: const [
+      destinations: [
         NavigationDestination(
-          icon: Icon(Icons.home_outlined, color: AppColors.textSecondary),
-          selectedIcon: Icon(Icons.home, color: AppColors.phase1),
+          icon: Icon(Icons.home_outlined, color: context.appColors.textSecondary),
+          selectedIcon: Icon(Icons.home, color: context.appColors.phase1),
           label: 'Today',
         ),
         NavigationDestination(
-          icon: Icon(Icons.bar_chart_outlined, color: AppColors.textSecondary),
-          selectedIcon: Icon(Icons.bar_chart, color: AppColors.phase1),
+          icon: Icon(Icons.bar_chart_outlined, color: context.appColors.textSecondary),
+          selectedIcon: Icon(Icons.bar_chart, color: context.appColors.phase1),
           label: 'Progress',
         ),
         NavigationDestination(
-          icon: Icon(Icons.calendar_month_outlined, color: AppColors.textSecondary),
-          selectedIcon: Icon(Icons.calendar_month, color: AppColors.phase1),
+          icon: Icon(Icons.calendar_month_outlined, color: context.appColors.textSecondary),
+          selectedIcon: Icon(Icons.calendar_month, color: context.appColors.phase1),
           label: 'Program',
         ),
         NavigationDestination(
-          icon: Icon(Icons.person_outline, color: AppColors.textSecondary),
-          selectedIcon: Icon(Icons.person, color: AppColors.phase1),
+          icon: Icon(Icons.person_outline, color: context.appColors.textSecondary),
+          selectedIcon: Icon(Icons.person, color: context.appColors.phase1),
           label: 'Profile',
         ),
       ],

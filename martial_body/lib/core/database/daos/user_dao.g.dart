@@ -5,6 +5,7 @@ part of 'user_dao.dart';
 // ignore_for_file: type=lint
 mixin _$UserDaoMixin on DatabaseAccessor<AppDatabase> {
   $UserStateTableTable get userStateTable => attachedDatabase.userStateTable;
+  $UserWeightsTable get userWeights => attachedDatabase.userWeights;
   UserDaoManager get managers => UserDaoManager(this);
 }
 
@@ -14,4 +15,6 @@ class UserDaoManager {
   $$UserStateTableTableTableManager get userStateTable =>
       $$UserStateTableTableTableManager(
           _db.attachedDatabase, _db.userStateTable);
+  $$UserWeightsTableTableManager get userWeights =>
+      $$UserWeightsTableTableManager(_db.attachedDatabase, _db.userWeights);
 }

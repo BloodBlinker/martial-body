@@ -1,0 +1,9 @@
+Version 1.5 — UI overhaul, light/dark theme, and weight tracking.
+
+• Light and dark theme toggle (saved across restarts)
+• Weight tracking — log bodyweight over time from the Profile tab
+• Active session screen fully redesigned — cleaner layout, bilateral rep tracking, quit confirmation
+• Home screen, progress charts, and programme view refreshed
+• Meal plan view improved
+• Android SDK updated to 36 (compatibility fix for newer Android versions)
+• Bug fixes and stability improvements throughout

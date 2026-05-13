@@ -20,9 +20,16 @@ class BlockExerciseDetail {
   final BlockExercise blockExercise;
   final Exercise exercise;
 
+  /// True for synthetic placeholder entries that represent an empty block
+  /// (e.g. a conditioning/cardio block that has no individual exercises).
+  /// blockExercise.id is negative (-(block.id)) for these entries; never
+  /// pass them to any DB call.
+  final bool isCardioBlock;
+
   const BlockExerciseDetail({
     required this.blockExercise,
     required this.exercise,
+    this.isCardioBlock = false,
   });
 }
 

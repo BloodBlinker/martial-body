@@ -29,6 +29,7 @@ import 'tables/workout_logs.dart';
 import 'tables/set_logs.dart';
 import 'tables/user_state.dart';
 import 'tables/user_profiles.dart';
+import 'tables/user_weights.dart';
 import 'daos/program_dao.dart';
 import 'daos/session_dao.dart';
 import 'daos/user_dao.dart';
@@ -43,6 +44,7 @@ export 'tables/workout_logs.dart';
 export 'tables/set_logs.dart';
 export 'tables/user_state.dart';
 export 'tables/user_profiles.dart';
+export 'tables/user_weights.dart';
 export 'daos/program_dao.dart';
 export 'daos/session_dao.dart';
 export 'daos/user_dao.dart';
@@ -61,6 +63,7 @@ part 'database.g.dart';
     SetLogs,
     UserStateTable,
     UserProfiles,
+    UserWeights,
   ],
   daos: [ProgramDao, SessionDao, UserDao, UserProfileDao],
 )
@@ -68,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -82,6 +85,13 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await _createUniqueIndexes();
+          }
+          if (from < 4) {
+            await m.addColumn(setLogs, setLogs.leftRepsCompleted);
+            await m.addColumn(setLogs, setLogs.rightRepsCompleted);
+          }
+          if (from < 5) {
+            await m.createTable(userWeights);
           }
         },
       );

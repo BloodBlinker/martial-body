@@ -19,8 +19,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/models/session_detail.dart';
+import '../../core/providers/home_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/confirm_quit_dialog.dart';
 
 class SessionOverviewScreen extends ConsumerWidget {
   final int sessionId;
@@ -39,13 +41,13 @@ class SessionOverviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(sessionDetailProvider(sessionId));
     return async.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+      loading: () => Scaffold(
+        backgroundColor: context.appColors.background,
+        body: Center(child: CircularProgressIndicator(color: context.appColors.gold)),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.textSecondary))),
+        backgroundColor: context.appColors.background,
+        body: Center(child: Text('Error: $e', style: TextStyle(color: context.appColors.textSecondary))),
       ),
       data: (detail) => _SessionBody(
         detail: detail,
@@ -73,7 +75,7 @@ class _SessionBody extends StatelessWidget {
     // (data-driven, seeded in phase1_data.dart). No top-of-screen banner here
     // — it was showing the warning twice.
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: Column(
         children: [
           _SessionHeader(detail: detail),
@@ -108,7 +110,7 @@ class _SessionHeader extends StatelessWidget {
     final day = detail.session.weekDay >= 1 && detail.session.weekDay <= 5
         ? _dayNames[detail.session.weekDay - 1]
         : 'Day ${detail.session.weekDay}';
-    final phaseColor = AppColors.phaseColor(detail.phase.number);
+    final phaseColor = context.appColors.phaseColor(detail.phase.number);
 
     return SafeArea(
       bottom: false,
@@ -120,7 +122,7 @@ class _SessionHeader extends StatelessWidget {
               onPressed: () => context.canPop()
                   ? context.pop()
                   : context.go('/home'),
-              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+              icon: Icon(Icons.arrow_back, color: context.appColors.textPrimary),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
@@ -150,13 +152,13 @@ class _SessionHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: context.appColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.timer_outlined, size: 14, color: AppColors.textSecondary),
+                  Icon(Icons.timer_outlined, size: 14, color: context.appColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
                     '~${detail.session.estimatedMinutes} min',
@@ -187,9 +189,9 @@ class _BlockCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +205,7 @@ class _BlockCard extends StatelessWidget {
                 Text(
                   block.block.name,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.appColors.textPrimary,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.8,
                       ),
@@ -218,7 +220,7 @@ class _BlockCard extends StatelessWidget {
               child: Text(
                 block.block.instructions!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.appColors.textSecondary,
                       height: 1.5,
                     ),
               ),
@@ -228,7 +230,7 @@ class _BlockCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Text(
                 'See instructions above',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appColors.textSecondary),
               ),
             ),
           ...block.exercises.asMap().entries.map((entry) {
@@ -258,7 +260,7 @@ class _BlockCard extends StatelessWidget {
                 child: Text(
                   be.exercise.name,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.appColors.textPrimary,
                       ),
                 ),
               ),
@@ -270,7 +272,7 @@ class _BlockCard extends StatelessWidget {
                     Text(
                       detail,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.appColors.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -278,7 +280,7 @@ class _BlockCard extends StatelessWidget {
                     Text(
                       be_.tempo!,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.appColors.textSecondary,
                             fontFamily: 'monospace',
                           ),
                     ),
@@ -344,31 +346,92 @@ class _BlockCard extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 
-class _StartSessionButton extends StatelessWidget {
+class _StartSessionButton extends ConsumerWidget {
   final int sessionId;
   const _StartSessionButton({required this.sessionId});
 
+  Future<void> _confirmQuit(BuildContext context, WidgetRef ref, int workoutLogId) =>
+      confirmQuitSession(context, ref, workoutLogId);
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final homeAsync = ref.watch(homeProvider);
+    final vm = homeAsync.valueOrNull;
+    final inProgressLog = vm?.inProgressLogBySessionId[sessionId];
+    final hasInProgress = inProgressLog != null;
+    final isDone = vm?.isSessionDone(sessionId) ?? false;
+
     return Container(
-      color: AppColors.background,
+      color: context.appColors.background,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () => context.go('/session/$sessionId/active'),
-          icon: const Icon(Icons.play_arrow_rounded, size: 22),
-          label: const Text('START SESSION'),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
-      ),
+      child: hasInProgress
+          ? Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/session/$sessionId/active'),
+                    icon: const Icon(Icons.play_arrow_rounded, size: 22),
+                    label: const Text('RESUME SESSION'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      textStyle: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 58,
+                  child: OutlinedButton(
+                    onPressed: () => _confirmQuit(context, ref, inProgressLog.id),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: context.appColors.error,
+                      side: BorderSide(color: context.appColors.error),
+                    ),
+                    child: const Text('QUIT'),
+                  ),
+                ),
+              ],
+            )
+          : isDone
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.go('/session/$sessionId/active'),
+                        icon: const Icon(Icons.replay, size: 20),
+                        label: const Text('REDO SESSION'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          textStyle: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/session/$sessionId/active'),
+                    icon: const Icon(Icons.play_arrow_rounded, size: 22),
+                    label: const Text('START SESSION'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
     );
   }
 }

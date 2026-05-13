@@ -22,9 +22,16 @@ import '../../core/database/database.dart';
 import '../../core/models/weekly_stats.dart';
 import '../../core/program/phase_math.dart';
 import '../../core/providers/analytics_provider.dart';
+import '../../core/providers/database_provider.dart';
 import '../../core/providers/home_provider.dart';
 import '../../core/providers/progress_provider.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:martial_body/core/theme/app_colors.dart';
+
+final _sessionNamesByIdProvider = FutureProvider<Map<int, String>>((ref) async {
+  final db = ref.watch(databaseProvider);
+  final allSessions = await db.programDao.getAllSessions();
+  return {for (final s in allSessions) s.id: s.name};
+});
 
 class ProgressScreen extends ConsumerWidget {
   const ProgressScreen({super.key});
@@ -34,13 +41,15 @@ class ProgressScreen extends ConsumerWidget {
     final logsAsync = ref.watch(progressProvider);
     final analyticsAsync = ref.watch(analyticsProvider);
     final homeAsync = ref.watch(homeProvider);
+    final sessionNamesAsync = ref.watch(_sessionNamesByIdProvider);
 
     // Real calendar-derived current week (not "max week with a log"), so the
     // streak banner stays honest if the user takes a week off.
     final currentWeek = homeAsync.value?.weekNumber ?? 1;
+    final sessionNamesById = sessionNamesAsync.valueOrNull ?? {};
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,27 +57,29 @@ class ProgressScreen extends ConsumerWidget {
             _Header(),
             Expanded(
               child: logsAsync.when(
-                loading: () => const Center(
-                    child: CircularProgressIndicator(color: AppColors.gold)),
+                loading: () => Center(
+                    child: CircularProgressIndicator(color: context.appColors.gold)),
                 error: (e, _) => Center(
                     child: Text('Error: $e',
                         style:
-                            const TextStyle(color: AppColors.textSecondary))),
+                            TextStyle(color: context.appColors.textSecondary))),
                 data: (logs) => analyticsAsync.when(
-                  loading: () => const Center(
+                  loading: () => Center(
                       child:
-                          CircularProgressIndicator(color: AppColors.gold)),
+                          CircularProgressIndicator(color: context.appColors.gold)),
                   error: (e, _) => _ProgressBody(
                     logs: logs,
                     weeklyStats: const [],
                     currentWeek: currentWeek,
                     analyticsError: '$e',
+                    sessionNamesById: sessionNamesById,
                   ),
                   data: (stats) => _ProgressBody(
                     logs: logs,
                     weeklyStats: stats,
                     currentWeek: currentWeek,
                     analyticsError: null,
+                    sessionNamesById: sessionNamesById,
                   ),
                 ),
               ),
@@ -87,12 +98,14 @@ class _ProgressBody extends StatelessWidget {
   final List<WeeklyStats> weeklyStats;
   final int currentWeek;
   final String? analyticsError;
+  final Map<int, String> sessionNamesById;
 
   const _ProgressBody({
     required this.logs,
     required this.weeklyStats,
     required this.currentWeek,
     required this.analyticsError,
+    required this.sessionNamesById,
   });
 
   @override
@@ -145,18 +158,33 @@ class _ProgressBody extends StatelessWidget {
         if (logs.isNotEmpty) ...[
           _SectionLabel('SESSION HISTORY'),
           const SizedBox(height: 12),
-          ...logs.map((l) => _HistoryTile(log: l)),
+          ...logs.map((l) => _HistoryTile(log: l, sessionName: sessionNamesById[l.sessionId])),
         ] else
           Padding(
-            padding: const EdgeInsets.only(top: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 40),
             child: Center(
-              child: Text(
-                'No sessions logged yet.\nComplete a workout to see your history.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(height: 1.6),
-                textAlign: TextAlign.center,
+              child: Column(
+                children: [
+                  Icon(Icons.fitness_center_outlined,
+                      color: context.appColors.textSecondary, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No sessions logged yet',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: context.appColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Complete a workout from the Home tab\nto start tracking your progress.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(height: 1.6),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           ),
@@ -189,13 +217,13 @@ class _SessionsBarChart extends StatelessWidget {
         barRods: [
           BarChartRodData(
             toY: s.sessionsCompleted.toDouble(),
-            color: AppColors.phase1,
+            color: context.appColors.phase1,
             width: 14,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: 5,
-              color: AppColors.surfaceVariant,
+              color: context.appColors.surfaceVariant,
             ),
           ),
         ],
@@ -212,7 +240,7 @@ class _SessionsBarChart extends StatelessWidget {
             drawVerticalLine: false,
             horizontalInterval: 1,
             getDrawingHorizontalLine: (_) => FlLine(
-              color: AppColors.divider,
+              color: context.appColors.divider,
               strokeWidth: 1,
             ),
           ),
@@ -229,8 +257,8 @@ class _SessionsBarChart extends StatelessWidget {
                 interval: 1,
                 getTitlesWidget: (v, m) => v % 1 == 0
                     ? Text('${v.toInt()}',
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 10))
+                        style: TextStyle(
+                            color: context.appColors.textSecondary, fontSize: 10))
                     : const SizedBox.shrink(),
               ),
             ),
@@ -244,18 +272,18 @@ class _SessionsBarChart extends StatelessWidget {
                     return const SizedBox.shrink();
                   }
                   return Text('Wk ${stats[idx].weekNumber}',
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 9));
+                      style: TextStyle(
+                          color: context.appColors.textSecondary, fontSize: 9));
                 },
               ),
             ),
           ),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => AppColors.surface,
+              getTooltipColor: (_) => context.appColors.surface,
               getTooltipItem: (group, gi, rod, ri) => BarTooltipItem(
                 '${rod.toY.toInt()} sessions',
-                const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+                TextStyle(color: context.appColors.textPrimary, fontSize: 12),
               ),
             ),
           ),
@@ -290,20 +318,20 @@ class _VolumeLineChart extends StatelessWidget {
               spots: spots,
               isCurved: true,
               curveSmoothness: 0.3,
-              color: AppColors.phase1,
+              color: context.appColors.phase1,
               barWidth: 2.5,
               dotData: FlDotData(
                 show: true,
                 getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
                   radius: 4,
-                  color: AppColors.phase1,
+                  color: context.appColors.phase1,
                   strokeWidth: 1.5,
-                  strokeColor: AppColors.background,
+                  strokeColor: context.appColors.background,
                 ),
               ),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppColors.phase1Muted,
+                color: context.appColors.phase1Muted,
               ),
             ),
           ],
@@ -311,7 +339,7 @@ class _VolumeLineChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             getDrawingHorizontalLine: (_) => FlLine(
-              color: AppColors.divider,
+              color: context.appColors.divider,
               strokeWidth: 1,
             ),
           ),
@@ -331,8 +359,8 @@ class _VolumeLineChart extends StatelessWidget {
                       ? '${(v / 1000).toStringAsFixed(1)}k'
                       : v.toInt().toString();
                   return Text(label,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 10));
+                      style: TextStyle(
+                          color: context.appColors.textSecondary, fontSize: 10));
                 },
               ),
             ),
@@ -346,21 +374,21 @@ class _VolumeLineChart extends StatelessWidget {
                     return const SizedBox.shrink();
                   }
                   return Text('Wk ${stats[idx].weekNumber}',
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 9));
+                      style: TextStyle(
+                          color: context.appColors.textSecondary, fontSize: 9));
                 },
               ),
             ),
           ),
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => AppColors.surface,
+              getTooltipColor: (_) => context.appColors.surface,
               getTooltipItems: (spots) => spots.map((s) {
                 final idx = s.x.toInt();
                 final wk = idx < stats.length ? stats[idx].weekNumber : idx + 1;
                 return LineTooltipItem(
                   'Wk $wk\n${s.y.toStringAsFixed(0)} kg',
-                  const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+                  TextStyle(color: context.appColors.textPrimary, fontSize: 12),
                 );
               }).toList(),
             ),
@@ -381,9 +409,9 @@ class _ChartCard extends StatelessWidget {
       height: 200,
       padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: child,
     );
@@ -399,7 +427,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: AppColors.textSecondary,
+            color: context.appColors.textSecondary,
             letterSpacing: 1.5,
           ),
     );
@@ -446,16 +474,16 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.appColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: context.appColors.divider),
         ),
         child: Column(
           children: [
             Text(
               value,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.phase1,
+                    color: context.appColors.phase1,
                     fontWeight: FontWeight.bold,
                   ),
             ),
@@ -463,7 +491,7 @@ class _StatCard extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.appColors.textSecondary,
                     height: 1.4,
                   ),
               textAlign: TextAlign.center,
@@ -490,17 +518,17 @@ class _PhaseProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.phaseColor(phase.number);
-    final muted = AppColors.phaseMutedColor(phase.number);
+    final color = context.appColors.phaseColor(phase.number);
+    final muted = context.appColors.phaseMutedColor(phase.number);
     final progress =
         totalInPhase == 0 ? 0.0 : (completedInPhase / totalInPhase).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -534,7 +562,7 @@ class _PhaseProgressBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: AppColors.surfaceVariant,
+              backgroundColor: context.appColors.surfaceVariant,
               valueColor: AlwaysStoppedAnimation<Color>(color),
               minHeight: 8,
             ),
@@ -571,19 +599,19 @@ class _AnalyticsErrorNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.deload.withAlpha(80)),
+        border: Border.all(color: context.appColors.deload.withAlpha(80)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, size: 16, color: AppColors.deload),
+          Icon(Icons.error_outline, size: 16, color: context.appColors.deload),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Charts unavailable: $message',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.appColors.textSecondary,
                     height: 1.4,
                   ),
             ),
@@ -608,21 +636,21 @@ class _StreakBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Row(
         children: [
           Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(
-              color: AppColors.deloadMuted,
+            decoration: BoxDecoration(
+              color: context.appColors.deloadMuted,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.local_fire_department,
-                color: AppColors.deload, size: 24),
+            child: Icon(Icons.local_fire_department,
+                color: context.appColors.deload, size: 24),
           ),
           const SizedBox(width: 16),
           Column(
@@ -671,7 +699,8 @@ class _Header extends StatelessWidget {
 
 class _HistoryTile extends StatelessWidget {
   final WorkoutLog log;
-  const _HistoryTile({required this.log});
+  final String? sessionName;
+  const _HistoryTile({required this.log, this.sessionName});
 
   @override
   Widget build(BuildContext context) {
@@ -684,9 +713,9 @@ class _HistoryTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Row(
         children: [
@@ -695,8 +724,8 @@ class _HistoryTile extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: log.completed
-                  ? AppColors.phase1Muted
-                  : AppColors.surfaceVariant,
+                  ? context.appColors.phase1Muted
+                  : context.appColors.surfaceVariant,
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -704,7 +733,7 @@ class _HistoryTile extends StatelessWidget {
                   ? Icons.check_circle_outline
                   : Icons.radio_button_unchecked,
               color:
-                  log.completed ? AppColors.phase1 : AppColors.textSecondary,
+                  log.completed ? context.appColors.phase1 : context.appColors.textSecondary,
               size: 20,
             ),
           ),
@@ -714,9 +743,9 @@ class _HistoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Week ${log.weekNumber} · Phase ${log.phaseNumber}',
+                  sessionName ?? 'Week ${log.weekNumber} · Phase ${log.phaseNumber}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.appColors.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
@@ -727,9 +756,9 @@ class _HistoryTile extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodySmall),
                     if (duration != null) ...[
                       const SizedBox(width: 8),
-                      const Text('·',
+                      Text('·',
                           style:
-                              TextStyle(color: AppColors.textSecondary)),
+                              TextStyle(color: context.appColors.textSecondary)),
                       const SizedBox(width: 8),
                       Text('$duration min',
                           style: Theme.of(context).textTheme.bodySmall),
@@ -743,8 +772,8 @@ class _HistoryTile extends StatelessWidget {
             log.completed ? 'Done' : 'In progress',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: log.completed
-                      ? AppColors.phase1
-                      : AppColors.textSecondary,
+                      ? context.appColors.phase1
+                      : context.appColors.textSecondary,
                 ),
           ),
         ],

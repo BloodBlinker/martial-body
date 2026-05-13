@@ -48,6 +48,20 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
         .getSingleOrNull();
   }
 
+  /// Returns the most recent **incomplete** workout log for [sessionId],
+  /// regardless of date. Prevents the midnight-boundary bug where a workout
+  /// started before midnight and resumed after midnight would create a second
+  /// orphan log instead of reusing the existing one.
+  Future<WorkoutLog?> getIncompleteLog(int sessionId) async {
+    return (select(workoutLogs)
+          ..where((w) =>
+              w.sessionId.equals(sessionId) &
+              w.completed.equals(false))
+          ..orderBy([(w) => OrderingTerm.desc(w.date)])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   Future<void> completeWorkoutLog(int id) =>
       (update(workoutLogs)..where((w) => w.id.equals(id))).write(
         WorkoutLogsCompanion(
@@ -56,12 +70,30 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
         ),
       );
 
+  Future<void> uncompleteWorkoutLog(int id) =>
+      (update(workoutLogs)..where((w) => w.id.equals(id))).write(
+        const WorkoutLogsCompanion(
+          completed: Value(false),
+          completedAt: Value(null),
+        ),
+      );
+
+  /// Permanently delete an in-progress workout log and all its set logs.
+  /// Used when the user explicitly chooses "Exit Session" — the workout
+  /// should not appear anywhere after this.
+  Future<void> deleteWorkoutLog(int id) async {
+    await (delete(setLogs)..where((s) => s.workoutLogId.equals(id))).go();
+    await (delete(workoutLogs)..where((w) => w.id.equals(id))).go();
+  }
+
   Future<void> upsertSetLog({
     required int workoutLogId,
     required int blockExerciseId,
     required int setNumber,
     double? weightKg,
     int? repsCompleted,
+    int? leftRepsCompleted,
+    int? rightRepsCompleted,
     required bool completed,
   }) async {
     final existing = await (select(setLogs)
@@ -75,6 +107,8 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       await (update(setLogs)..where((s) => s.id.equals(existing.id))).write(
         SetLogsCompanion(
           repsCompleted: Value(repsCompleted),
+          leftRepsCompleted: Value(leftRepsCompleted),
+          rightRepsCompleted: Value(rightRepsCompleted),
           weightKg: Value(weightKg),
           completed: Value(completed),
           completedAt: Value(completed ? DateTime.now() : null),
@@ -86,6 +120,8 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
         blockExerciseId: blockExerciseId,
         setNumber: setNumber,
         repsCompleted: Value(repsCompleted),
+        leftRepsCompleted: Value(leftRepsCompleted),
+        rightRepsCompleted: Value(rightRepsCompleted),
         weightKg: Value(weightKg),
         completed: Value(completed),
         completedAt: Value(completed ? DateTime.now() : null),

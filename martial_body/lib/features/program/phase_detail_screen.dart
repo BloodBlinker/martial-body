@@ -22,7 +22,7 @@ import '../../core/content/phase_content.dart';
 import '../../core/database/database.dart';
 import '../../core/program/phase_math.dart';
 import '../../core/providers/database_provider.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:martial_body/core/theme/app_colors.dart';
 
 /// Mon–Fri sessions for a single phase. Reached by tapping the phase tile on
 /// the Program screen. Sessions are read-only previews — tapping a session
@@ -39,16 +39,16 @@ class PhaseDetailScreen extends ConsumerWidget {
       orElse: () => kPhases.first,
     );
     final spec = phaseContentFor(phaseNumber);
-    final phaseColor = AppColors.phaseColor(phaseNumber);
+    final phaseColor = context.appColors.phaseColor(phaseNumber);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.appColors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: context.appColors.textPrimary),
           onPressed: () => context.canPop() ? context.pop() : context.go('/program'),
         ),
         title: Text(
@@ -91,7 +91,7 @@ class _PhaseSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: phaseColor.withAlpha(90)),
       ),
@@ -131,13 +131,13 @@ class _SessionsList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(_phaseSessionsProvider(phaseNumber));
     return async.when(
-      loading: () => const Padding(
+      loading: () => Padding(
         padding: EdgeInsets.symmetric(vertical: 48),
-        child: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+        child: Center(child: CircularProgressIndicator(color: context.appColors.gold)),
       ),
       error: (e, _) => Text(
         'Error: $e',
-        style: const TextStyle(color: AppColors.textSecondary),
+        style: TextStyle(color: context.appColors.textSecondary),
       ),
       data: (sessions) {
         if (sessions.isEmpty) {
@@ -146,7 +146,7 @@ class _SessionsList extends ConsumerWidget {
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
-                ?.copyWith(color: AppColors.textSecondary),
+                ?.copyWith(color: context.appColors.textSecondary),
           );
         }
         return Column(
@@ -183,7 +183,7 @@ class _SessionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: context.appColors.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -192,7 +192,7 @@ class _SessionTile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.divider),
+            border: Border.all(color: context.appColors.divider),
           ),
           child: Row(
             children: [
@@ -232,7 +232,7 @@ class _SessionTile extends StatelessWidget {
                     Text(
                       session.focus,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.appColors.textSecondary,
                             height: 1.35,
                           ),
                       maxLines: 2,
@@ -241,13 +241,13 @@ class _SessionTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.timer_outlined,
-                            size: 12, color: AppColors.textSecondary),
+                        Icon(Icons.timer_outlined,
+                            size: 12, color: context.appColors.textSecondary),
                         const SizedBox(width: 4),
                         Text(
                           '~${session.estimatedMinutes} min',
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: context.appColors.textSecondary,
                               ),
                         ),
                       ],
@@ -255,7 +255,7 @@ class _SessionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: context.appColors.textSecondary),
             ],
           ),
         ),
@@ -277,9 +277,9 @@ class _ComingSoonCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.appColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,7 +302,7 @@ class _ComingSoonCard extends StatelessWidget {
           Text(
             blurb,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.appColors.textSecondary,
                   height: 1.5,
                 ),
           ),

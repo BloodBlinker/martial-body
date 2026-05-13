@@ -71,6 +71,8 @@ class ProgramDao extends DatabaseAccessor<AppDatabase> with _$ProgramDaoMixin {
         .getSingleOrNull();
   }
 
+  Future<List<Session>> getAllSessions() => select(sessions).get();
+
   Future<List<Session>> getSessionsForPhase(int phaseNumber) async {
     final phase = await getPhaseByNumber(phaseNumber);
     if (phase == null) return [];

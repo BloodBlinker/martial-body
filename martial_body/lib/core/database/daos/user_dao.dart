@@ -19,7 +19,7 @@ import '../database.dart';
 
 part 'user_dao.g.dart';
 
-@DriftAccessor(tables: [UserStateTable])
+@DriftAccessor(tables: [UserStateTable, UserWeights])
 class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
   UserDao(super.db);
 
@@ -46,4 +46,37 @@ class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
       (update(userStateTable)).write(
         UserStateTableCompanion(programStartDate: Value(newDate)),
       );
+
+  /// Get the most recent weight entry.
+  Future<UserWeight?> getLatestWeight() => (select(userWeights)
+        ..orderBy([(w) => OrderingTerm.desc(w.date)])
+        ..limit(1))
+      .getSingleOrNull();
+
+  /// Get weight recorded on a specific date (normalized to start of day).
+  Future<UserWeight?> getWeightForDate(DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    return (select(userWeights)
+          ..where((w) =>
+              w.date.isBiggerOrEqualValue(startOfDay) &
+              w.date.isSmallerThanValue(endOfDay)))
+        .getSingleOrNull();
+  }
+
+  /// Insert or update weight for today. If a weight already exists for today,
+  /// it's overwritten. Otherwise, a new entry is created.
+  Future<void> upsertTodayWeight(double weightKg) async {
+    final today = DateTime.now();
+    final existing = await getWeightForDate(today);
+    if (existing != null) {
+      await (update(userWeights)..where((w) => w.id.equals(existing.id)))
+          .write(UserWeightsCompanion(weightKg: Value(weightKg)));
+    } else {
+      await into(userWeights).insert(UserWeightsCompanion.insert(
+        date: DateTime.now(),
+        weightKg: weightKg,
+      ));
+    }
+  }
 }
