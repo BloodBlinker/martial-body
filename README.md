@@ -43,24 +43,31 @@ Martial Body is different:
 
 - **One programme, one goal** — every session is mapped out, from Foundation to MMA Transition
 - **Progressive overload built-in** — automatic deload weeks, no manual planning needed
-- **Your data stays on your phone** — zero network calls, zero permissions beyond storage
+- **Your data stays on your phone** — zero network calls, no internet permission (only local notifications + keep-awake)
 - **Built for day one** — you don't need to be fit to start; the programme meets you where you are
 
 ---
 
 ## Features
 
-- **4-phase MMA preparation programme** — Foundation → Engine Build → Full Combat → MMA Transition
-- **Guided active sessions** — step-by-step walkthrough of every exercise, set, rep, and rest period
-- **Built-in interval timer** — work/rest timer for conditioning blocks and sprint intervals
+- **4-phase MMA preparation programme** — Foundation → Engine Build → Full Combat → MMA Transition (6 + 6 + 8 + 4 weeks)
+- **Guided active sessions** — step-by-step walkthrough of every exercise, set, rep, tempo, and rest period
+- **Built-in timers** — per-set rest timer plus count-up timers for conditioning and sprint-interval blocks
+- **Completion-anchored progression** — the week advances only when you complete it; miss two weekday workouts in a week and it resets, so the programme can't quietly drift out from under you
 - **Automatic deload weeks** — volume reduced 40–50% on weeks 4, 10, 16, and 20
 - **Phase 4 taper & shadowboxing** — progressive volume reduction with shadowboxing integration
-- **Progress tracking & charts** — session history, streaks, weekly completion, phase analytics
-- **Health metrics** — BMI, BMR, Devine ideal weight, Deurenberg body fat estimates
+- **Journey map** — a visual 24-week path showing your phase, rank (I → IV), and momentum at a glance
+- **Achievements & graduation** — milestone badges that unlock as you progress, with an end-of-programme completion screen
+- **Personal records & progression charts** — automatic PR tracking and per-exercise weight-over-time graphs
+- **Bodyweight tracking** — log your weight and watch the trend
+- **Progress analytics** — session history, weekly volume/sessions charts with plain-language takeaways, and recovery (RPE/sleep) mapping
+- **Smart reminders** — gentle re-engagement notifications, with sooner streak-recovery nudges when a week is at risk
+- **Metric & Imperial units** — kg/cm or lb/in, switchable any time
+- **Light & dark themes**
+- **Health metrics** — BMI, BMR/TDEE, Devine ideal weight, Deurenberg body-fat estimates
 - **Phase-specific meal plans** — nutrition guidelines matched to each training phase
 - **CSV export** — export your full workout history via the share sheet
-- **Fully offline** — zero network calls, zero permissions beyond storage
-- **No accounts · No ads · No tracking**
+- **Fully offline** — no internet permission, no telemetry, no ads, no accounts; your data never leaves the device
 
 ---
 

@@ -34,6 +34,7 @@ import 'daos/program_dao.dart';
 import 'daos/session_dao.dart';
 import 'daos/user_dao.dart';
 import 'daos/user_profile_dao.dart';
+import '../program/phase_math.dart';
 
 export 'tables/phases.dart';
 export 'tables/sessions.dart';
@@ -71,7 +72,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -92,6 +93,40 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await m.createTable(userWeights);
+          }
+          if (from < 6) {
+            await m.addColumn(workoutLogs, workoutLogs.rpe);
+          }
+          if (from < 7) {
+            await m.addColumn(workoutLogs, workoutLogs.sleepHours);
+          }
+          if (from < 8) {
+            // Completion-anchored scheduling fields.
+            await m.addColumn(userStateTable, userStateTable.currentWeek);
+            await m.addColumn(userStateTable, userStateTable.weekAnchorDate);
+            await m.addColumn(userStateTable, userStateTable.programComplete);
+            // Backfill existing users from their current calendar position so
+            // nobody loses their place on upgrade.
+            final row = await userDao.getUserState();
+            if (row != null) {
+              final now = DateTime.now();
+              final calendarWeek =
+                  computeWeekNumber(row.programStartDate, now);
+              final clampedWeek = calendarWeek < 1
+                  ? 1
+                  : (calendarWeek > kProgramWeeks ? kProgramWeeks : calendarWeek);
+              // Anchor the current week to the upgrade day (not this Monday) so
+              // the new 2-missed-days reset rule is NEVER applied retroactively
+              // to days that elapsed under the old calendar-based version. The
+              // current week effectively restarts fresh from the upgrade — no
+              // surprise reset, no loss of this week's logged sessions.
+              final today = DateTime(now.year, now.month, now.day);
+              await userDao.updateScheduleState(
+                currentWeek: clampedWeek,
+                weekAnchorDate: today,
+                programComplete: calendarWeek > kProgramWeeks,
+              );
+            }
           }
         },
       );

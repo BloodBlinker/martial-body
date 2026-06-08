@@ -147,16 +147,18 @@ const appColorsDark = AppColorsExtension(
   gold: Color(0xFFD4A843),
   phase1: Color(0xFFD4A843),
   phase2: Color(0xFFE07A3C),
-  phase3: Color(0xFFD44C4C),
+  phase3: Color(0xFFDC5A5F),
   phase4: Color(0xFF4A8FCC),
   deload: Color(0xFFD49A38),
   phase1Muted: Color(0x26D4A843),
   phase2Muted: Color(0x26E07A3C),
-  phase3Muted: Color(0x26D44C4C),
+  phase3Muted: Color(0x26DC5A5F),
   phase4Muted: Color(0x264A8FCC),
   deloadMuted: Color(0x26D49A38),
   textPrimary: Color(0xFFF2ECD8),
-  textSecondary: Color(0xFF7A6E5E),
+  // Lightened from #7A6E5E to clear WCAG AA (~5:1) for small secondary text
+  // on the near-black background.
+  textSecondary: Color(0xFF8C8170),
   error: Color(0xFFD44C4C),
 );
 
@@ -168,12 +170,12 @@ const appColorsLight = AppColorsExtension(
   gold: Color(0xFFC49A38),
   phase1: Color(0xFFC49A38),
   phase2: Color(0xFFD26D30),
-  phase3: Color(0xFFC04343),
+  phase3: Color(0xFFCB4F54),
   phase4: Color(0xFF4280B8),
   deload: Color(0xFFC48D30),
   phase1Muted: Color(0x1AC49A38),
   phase2Muted: Color(0x1AD26D30),
-  phase3Muted: Color(0x1AC04343),
+  phase3Muted: Color(0x1ACB4F54),
   phase4Muted: Color(0x1A4280B8),
   deloadMuted: Color(0x1AC48D30),
   textPrimary: Color(0xFF1F2937),
@@ -191,16 +193,16 @@ class AppColors {
   static const Color gold = Color(0xFFD4A843);
   static const Color phase1 = Color(0xFFD4A843);
   static const Color phase2 = Color(0xFFE07A3C);
-  static const Color phase3 = Color(0xFFD44C4C);
+  static const Color phase3 = Color(0xFFDC5A5F);
   static const Color phase4 = Color(0xFF4A8FCC);
   static const Color deload = Color(0xFFD49A38);
   static const Color phase1Muted = Color(0x26D4A843);
   static const Color phase2Muted = Color(0x26E07A3C);
-  static const Color phase3Muted = Color(0x26D44C4C);
+  static const Color phase3Muted = Color(0x26DC5A5F);
   static const Color phase4Muted = Color(0x264A8FCC);
   static const Color deloadMuted = Color(0x26D49A38);
   static const Color textPrimary = Color(0xFFF2ECD8);
-  static const Color textSecondary = Color(0xFF7A6E5E);
+  static const Color textSecondary = Color(0xFF8C8170);
   static const Color error = Color(0xFFD44C4C);
 
   static Color phaseColor(int phase) {

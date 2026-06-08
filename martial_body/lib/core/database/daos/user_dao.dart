@@ -34,18 +34,54 @@ class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
     return row != null;
   }
 
+  /// Create the user_state row when the user taps "Begin Program".
+  /// Week 1 anchors to the install day (a brand-new user starts immediately),
+  /// per the completion-anchored scheduling design.
   Future<int> insertUserState(DateTime programStartDate) =>
       into(userStateTable).insert(UserStateTableCompanion.insert(
         programStartDate: programStartDate,
         onboardingComplete: const Value(true),
+        currentWeek: const Value(1),
+        weekAnchorDate: Value(programStartDate),
+        programComplete: const Value(false),
       ));
 
-  /// Overwrites the stored program start date. Used when correcting a
-  /// stale/hardcoded development value on existing installs.
-  Future<void> updateProgramStartDate(DateTime newDate) =>
-      (update(userStateTable)).write(
-        UserStateTableCompanion(programStartDate: Value(newDate)),
-      );
+  /// Update any subset of the completion-anchored scheduling fields.
+  Future<void> updateScheduleState({
+    int? currentWeek,
+    DateTime? weekAnchorDate,
+    bool? programComplete,
+  }) =>
+      update(userStateTable).write(UserStateTableCompanion(
+        currentWeek:
+            currentWeek == null ? const Value.absent() : Value(currentWeek),
+        weekAnchorDate: weekAnchorDate == null
+            ? const Value.absent()
+            : Value(weekAnchorDate),
+        programComplete: programComplete == null
+            ? const Value.absent()
+            : Value(programComplete),
+      ));
+
+  /// Full reset back to Week 1 (used by the end-of-program "Reset" action).
+  /// Profile is preserved; the caller wipes workout/weight data separately.
+  Future<void> resetSchedule(DateTime anchor) =>
+      update(userStateTable).write(UserStateTableCompanion(
+        currentWeek: const Value(1),
+        weekAnchorDate: Value(anchor),
+        programComplete: const Value(false),
+        programStartDate: Value(anchor),
+      ));
+
+  /// All bodyweight entries, oldest first — for the bodyweight trend chart.
+  Future<List<UserWeight>> getAllWeights() =>
+      (select(userWeights)..orderBy([(w) => OrderingTerm.asc(w.date)])).get();
+
+  Stream<List<UserWeight>> watchAllWeights() =>
+      (select(userWeights)..orderBy([(w) => OrderingTerm.asc(w.date)])).watch();
+
+  /// Wipe all bodyweight history. Only used by the end-of-program full reset.
+  Future<void> deleteAllWeights() => delete(userWeights).go();
 
   /// Get the most recent weight entry.
   Future<UserWeight?> getLatestWeight() => (select(userWeights)

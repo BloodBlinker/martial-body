@@ -26,4 +26,6 @@ class WorkoutLogs extends Table {
   BoolColumn get completed => boolean().withDefault(const Constant(false))();
   DateTimeColumn get startedAt => dateTime().nullable()();
   DateTimeColumn get completedAt => dateTime().nullable()();
+  IntColumn get rpe => integer().nullable()();
+  RealColumn get sleepHours => real().nullable()();
 }

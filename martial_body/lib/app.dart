@@ -18,9 +18,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/models/home_view_model.dart';
+import 'core/program/schedule.dart';
+import 'core/providers/database_provider.dart';
+import 'core/providers/home_provider.dart';
 import 'core/providers/theme_provider.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
+import 'features/journey/journey_screen.dart';
 import 'features/onboarding/intro_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/progress/progress_screen.dart';
@@ -51,6 +57,10 @@ final _router = GoRouter(
         GoRoute(
           path: '/home',
           builder: (_, __) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/journey',
+          builder: (_, __) => const JourneyScreen(),
         ),
         GoRoute(
           path: '/session/:sessionId',
@@ -149,12 +159,69 @@ class _InvalidRouteScreen extends StatelessWidget {
   }
 }
 
-class MartialBodyApp extends ConsumerWidget {
+class MartialBodyApp extends ConsumerStatefulWidget {
   const MartialBodyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MartialBodyApp> createState() => _MartialBodyAppState();
+}
+
+class _MartialBodyAppState extends ConsumerState<MartialBodyApp>
+    with WidgetsBindingObserver {
+  // Last scheduled reminder inputs — avoids rescheduling on every log change.
+  int? _lastWeek;
+  int? _lastMiss;
+  bool? _lastComplete;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The day can roll over while the app is backgrounded. On resume, settle
+    // any pending week advance/reset and refresh Home.
+    if (state == AppLifecycleState.resumed) {
+      final db = ref.read(databaseProvider);
+      reconcileSchedule(db).then((_) {
+        if (mounted) ref.invalidate(homeProvider);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+
+    // Keep the re-engagement reminder in step with the user's real progress:
+    // reschedule (with streak-recovery urgency when a day has been missed)
+    // whenever the week, miss count, or completion state changes.
+    ref.listen<AsyncValue<HomeViewModel>>(homeProvider, (_, next) {
+      next.whenData((vm) {
+        if (_lastWeek == vm.weekNumber &&
+            _lastMiss == vm.missCount &&
+            _lastComplete == vm.programComplete) {
+          return;
+        }
+        _lastWeek = vm.weekNumber;
+        _lastMiss = vm.missCount;
+        _lastComplete = vm.programComplete;
+        NotificationService().scheduleSmartReminder(
+          weekNumber: vm.weekNumber,
+          missCount: vm.missCount,
+          programComplete: vm.programComplete,
+        );
+      });
+    });
+
     return MaterialApp.router(
       title: 'Martial Body',
       theme: AppTheme.light,
@@ -183,12 +250,12 @@ class _ScaffoldWithNav extends StatelessWidget {
     return 0; // /home and /session/*
   }
 
-  // Hide the bottom nav on the immersive active session screen. Match the
-  // full trailing segment `/active` so a path like `/active-alt` (or a
-  // session named "active") doesn't accidentally hide the nav.
+  // Hide the bottom nav on the immersive session screens (both the overview /
+  // start screen and the active workout) so they read as full-screen flows
+  // rather than tabbed destinations. Everything under `/session/` qualifies.
   bool get _showNav {
     final path = Uri.parse(location).path;
-    return !(path == '/active' || path.endsWith('/active'));
+    return !path.startsWith('/session/');
   }
 
   @override
@@ -224,7 +291,7 @@ class _ScaffoldWithNav extends StatelessWidget {
         NavigationDestination(
           icon: Icon(Icons.home_outlined, color: context.appColors.textSecondary),
           selectedIcon: Icon(Icons.home, color: context.appColors.phase1),
-          label: 'Today',
+          label: 'Home',
         ),
         NavigationDestination(
           icon: Icon(Icons.bar_chart_outlined, color: context.appColors.textSecondary),

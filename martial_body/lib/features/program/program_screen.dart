@@ -31,13 +31,11 @@ import '../../core/theme/app_colors.dart';
 class _PhaseDisplay {
   final PhaseInfo info;
   final String subtitle;
-  final Color color;
   final List<String> dayLabels;
 
   const _PhaseDisplay({
     required this.info,
     required this.subtitle,
-    required this.color,
     required this.dayLabels,
   });
 
@@ -60,7 +58,6 @@ const _kPhaseDisplay = <_PhaseDisplay>[
       deloadWeeks: {4},
     ),
     subtitle: 'Foundation',
-    color: AppColors.phase1,
     // NOTE: Day labels here are presentational only. When Phase 2+ seed data
     // lands, prefer deriving them from the DB session names to avoid drift.
     dayLabels: ['Mob+Str', 'Push+Neck', 'Post Chain', 'Pull+Grip', 'Core+Mob'],
@@ -74,7 +71,6 @@ const _kPhaseDisplay = <_PhaseDisplay>[
       deloadWeeks: {10},
     ),
     subtitle: 'Engine Build',
-    color: AppColors.phase2,
     dayLabels: ['Lower', 'Upper', 'Intervals', 'Pull', 'Circuit'],
   ),
   _PhaseDisplay(
@@ -86,7 +82,6 @@ const _kPhaseDisplay = <_PhaseDisplay>[
       deloadWeeks: {16, 20},
     ),
     subtitle: 'Full Combat',
-    color: AppColors.phase3,
     dayLabels: ['Combat Str', 'Power', 'Sprints', 'Pull+Grip', 'Circuit'],
   ),
   _PhaseDisplay(
@@ -98,7 +93,6 @@ const _kPhaseDisplay = <_PhaseDisplay>[
       deloadWeeks: {},
     ),
     subtitle: 'MMA Transition',
-    color: AppColors.phase4,
     dayLabels: ['Mon', 'Tue', 'Wed', 'Fri'],
   ),
 ];
@@ -161,24 +155,29 @@ class _ProgramScreenState extends ConsumerState<ProgramScreen>
     return Scaffold(
       backgroundColor: context.appColors.background,
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _Header(),
-            _PhaseTabs(controller: _tabController),
-            const SizedBox(height: 4),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: _kPhaseDisplay
-                    .map((phase) => _PhaseTabContent(
-                          phase: phase,
-                          currentWeek: currentWeek,
-                        ))
-                    .toList(),
-              ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Header(),
+                _PhaseTabs(controller: _tabController),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: _kPhaseDisplay
+                        .map((phase) => _PhaseTabContent(
+                              phase: phase,
+                              currentWeek: currentWeek,
+                            ))
+                        .toList(),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -191,16 +190,29 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(
-              'Program',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Program',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Browse the full 24-week map',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.appColors.textSecondary,
+                      ),
+                ),
+              ],
             ),
           ),
           Container(
@@ -245,7 +257,9 @@ class _PhaseTabsState extends State<_PhaseTabs> {
   Widget build(BuildContext context) {
     final labels =
         _kPhaseDisplay.map((p) => 'Phase ${p.number}').toList();
-    final colors = _kPhaseDisplay.map((p) => p.color).toList();
+    final colors = _kPhaseDisplay
+        .map((p) => context.appColors.phaseColor(p.number))
+        .toList();
     final idx = widget.controller.index;
 
     return TabBar(
@@ -301,7 +315,7 @@ class _PhaseTabContent extends StatelessWidget {
           return _WeekRow(
             week: week,
             dayLabels: phase.dayLabels,
-            phaseColor: phase.color,
+            phaseColor: context.appColors.phaseColor(phase.number),
             isCurrent: isCurrent,
             isComplete: isComplete,
             isDeload: isDeload,
@@ -321,10 +335,11 @@ class _PhaseHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = context.appColors.phaseColor(phase.number);
     final isActivePhase =
         currentWeek >= phase.startWeek && currentWeek <= phase.endWeek;
     final borderColor =
-        isActivePhase ? phase.color : phase.color.withAlpha(50);
+        isActivePhase ? color : color.withAlpha(50);
 
     return Material(
       color: context.appColors.surface,
@@ -344,14 +359,14 @@ class _PhaseHeader extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: phase.color.withAlpha(30),
+                  color: color.withAlpha(30),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     '${phase.number}',
                     style: TextStyle(
-                      color: phase.color,
+                      color: color,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
@@ -374,7 +389,7 @@ class _PhaseHeader extends StatelessWidget {
                       phase.weekRange,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color:
-                                phase.color.withAlpha(isActivePhase ? 255 : 140),
+                                color.withAlpha(isActivePhase ? 255 : 140),
                           ),
                     ),
                   ],
@@ -385,13 +400,13 @@ class _PhaseHeader extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: phase.color.withAlpha(25),
+                    color: color.withAlpha(25),
                     borderRadius: BorderRadius.circular(5),
                   ),
                   child: Text(
                     'ACTIVE',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: phase.color,
+                          color: color,
                           fontWeight: FontWeight.bold,
                           fontSize: 9,
                           letterSpacing: 1.0,
@@ -400,7 +415,7 @@ class _PhaseHeader extends StatelessWidget {
                 ),
               const SizedBox(width: 8),
               Icon(Icons.chevron_right,
-                  color: phase.color.withAlpha(isActivePhase ? 220 : 120)),
+                  color: color.withAlpha(isActivePhase ? 220 : 120)),
             ],
           ),
         ),
@@ -533,34 +548,22 @@ class _WeekRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
+          // One clean status block per training day. The weekday is given by
+          // the column header above; the full session focus lives in the phase
+          // detail screen — so the grid stays legible instead of cramming a
+          // cryptic 8pt abbreviation into every cell.
           ...dayLabels.map(
-            (d) => Expanded(
+            (_) => Expanded(
               child: Container(
+                height: 16,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                 decoration: BoxDecoration(
                   color: isComplete
-                      ? phaseColor.withAlpha(25)
+                      ? phaseColor.withAlpha(70)
                       : isCurrent
-                          ? phaseColor.withAlpha(15)
+                          ? phaseColor.withAlpha(38)
                           : context.appColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  d,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 8,
-                        color: isComplete
-                            ? phaseColor
-                            : isCurrent
-                                ? phaseColor.withAlpha(200)
-                                : context.appColors.textSecondary,
-                        height: 1.2,
-                      ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

@@ -19,16 +19,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'core/database/database.dart';
+import 'core/program/schedule.dart';
 import 'core/providers/database_provider.dart';
 import 'core/seed/seeder.dart';
+import 'core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final notificationService = NotificationService();
+  await notificationService.init();
+  await notificationService.requestPermissions();
 
   final db = AppDatabase();
 
   // Seed program structure (phases, sessions, blocks, exercises).
   await Seeder(db).seedIfEmpty();
+
+  // Settle any pending week rollover (advance on success / reset on failure)
+  // before the first frame so Home opens on the correct week. No-op until the
+  // user has onboarded.
+  await reconcileSchedule(db);
 
   // user_state is intentionally NOT created here. Its presence is the
   // "has onboarded" flag used by the splash screen: missing row → route to

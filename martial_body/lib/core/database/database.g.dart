@@ -2036,6 +2036,17 @@ class $WorkoutLogsTable extends WorkoutLogs
   late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
       'completed_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _rpeMeta = const VerificationMeta('rpe');
+  @override
+  late final GeneratedColumn<int> rpe = GeneratedColumn<int>(
+      'rpe', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _sleepHoursMeta =
+      const VerificationMeta('sleepHours');
+  @override
+  late final GeneratedColumn<double> sleepHours = GeneratedColumn<double>(
+      'sleep_hours', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -2045,7 +2056,9 @@ class $WorkoutLogsTable extends WorkoutLogs
         phaseNumber,
         completed,
         startedAt,
-        completedAt
+        completedAt,
+        rpe,
+        sleepHours
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2102,6 +2115,16 @@ class $WorkoutLogsTable extends WorkoutLogs
           completedAt.isAcceptableOrUnknown(
               data['completed_at']!, _completedAtMeta));
     }
+    if (data.containsKey('rpe')) {
+      context.handle(
+          _rpeMeta, rpe.isAcceptableOrUnknown(data['rpe']!, _rpeMeta));
+    }
+    if (data.containsKey('sleep_hours')) {
+      context.handle(
+          _sleepHoursMeta,
+          sleepHours.isAcceptableOrUnknown(
+              data['sleep_hours']!, _sleepHoursMeta));
+    }
     return context;
   }
 
@@ -2127,6 +2150,10 @@ class $WorkoutLogsTable extends WorkoutLogs
           .read(DriftSqlType.dateTime, data['${effectivePrefix}started_at']),
       completedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
+      rpe: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}rpe']),
+      sleepHours: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}sleep_hours']),
     );
   }
 
@@ -2145,6 +2172,8 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
   final bool completed;
   final DateTime? startedAt;
   final DateTime? completedAt;
+  final int? rpe;
+  final double? sleepHours;
   const WorkoutLog(
       {required this.id,
       required this.date,
@@ -2153,7 +2182,9 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
       required this.phaseNumber,
       required this.completed,
       this.startedAt,
-      this.completedAt});
+      this.completedAt,
+      this.rpe,
+      this.sleepHours});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2168,6 +2199,12 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
     }
     if (!nullToAbsent || completedAt != null) {
       map['completed_at'] = Variable<DateTime>(completedAt);
+    }
+    if (!nullToAbsent || rpe != null) {
+      map['rpe'] = Variable<int>(rpe);
+    }
+    if (!nullToAbsent || sleepHours != null) {
+      map['sleep_hours'] = Variable<double>(sleepHours);
     }
     return map;
   }
@@ -2186,6 +2223,10 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
       completedAt: completedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(completedAt),
+      rpe: rpe == null && nullToAbsent ? const Value.absent() : Value(rpe),
+      sleepHours: sleepHours == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sleepHours),
     );
   }
 
@@ -2201,6 +2242,8 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
       completed: serializer.fromJson<bool>(json['completed']),
       startedAt: serializer.fromJson<DateTime?>(json['startedAt']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
+      rpe: serializer.fromJson<int?>(json['rpe']),
+      sleepHours: serializer.fromJson<double?>(json['sleepHours']),
     );
   }
   @override
@@ -2215,6 +2258,8 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
       'completed': serializer.toJson<bool>(completed),
       'startedAt': serializer.toJson<DateTime?>(startedAt),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
+      'rpe': serializer.toJson<int?>(rpe),
+      'sleepHours': serializer.toJson<double?>(sleepHours),
     };
   }
 
@@ -2226,7 +2271,9 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
           int? phaseNumber,
           bool? completed,
           Value<DateTime?> startedAt = const Value.absent(),
-          Value<DateTime?> completedAt = const Value.absent()}) =>
+          Value<DateTime?> completedAt = const Value.absent(),
+          Value<int?> rpe = const Value.absent(),
+          Value<double?> sleepHours = const Value.absent()}) =>
       WorkoutLog(
         id: id ?? this.id,
         date: date ?? this.date,
@@ -2236,6 +2283,8 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
         completed: completed ?? this.completed,
         startedAt: startedAt.present ? startedAt.value : this.startedAt,
         completedAt: completedAt.present ? completedAt.value : this.completedAt,
+        rpe: rpe.present ? rpe.value : this.rpe,
+        sleepHours: sleepHours.present ? sleepHours.value : this.sleepHours,
       );
   WorkoutLog copyWithCompanion(WorkoutLogsCompanion data) {
     return WorkoutLog(
@@ -2250,6 +2299,9 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
       startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
       completedAt:
           data.completedAt.present ? data.completedAt.value : this.completedAt,
+      rpe: data.rpe.present ? data.rpe.value : this.rpe,
+      sleepHours:
+          data.sleepHours.present ? data.sleepHours.value : this.sleepHours,
     );
   }
 
@@ -2263,14 +2315,16 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
           ..write('phaseNumber: $phaseNumber, ')
           ..write('completed: $completed, ')
           ..write('startedAt: $startedAt, ')
-          ..write('completedAt: $completedAt')
+          ..write('completedAt: $completedAt, ')
+          ..write('rpe: $rpe, ')
+          ..write('sleepHours: $sleepHours')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, date, sessionId, weekNumber, phaseNumber,
-      completed, startedAt, completedAt);
+      completed, startedAt, completedAt, rpe, sleepHours);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2282,7 +2336,9 @@ class WorkoutLog extends DataClass implements Insertable<WorkoutLog> {
           other.phaseNumber == this.phaseNumber &&
           other.completed == this.completed &&
           other.startedAt == this.startedAt &&
-          other.completedAt == this.completedAt);
+          other.completedAt == this.completedAt &&
+          other.rpe == this.rpe &&
+          other.sleepHours == this.sleepHours);
 }
 
 class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
@@ -2294,6 +2350,8 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
   final Value<bool> completed;
   final Value<DateTime?> startedAt;
   final Value<DateTime?> completedAt;
+  final Value<int?> rpe;
+  final Value<double?> sleepHours;
   const WorkoutLogsCompanion({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
@@ -2303,6 +2361,8 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
     this.completed = const Value.absent(),
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
+    this.rpe = const Value.absent(),
+    this.sleepHours = const Value.absent(),
   });
   WorkoutLogsCompanion.insert({
     this.id = const Value.absent(),
@@ -2313,6 +2373,8 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
     this.completed = const Value.absent(),
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
+    this.rpe = const Value.absent(),
+    this.sleepHours = const Value.absent(),
   })  : date = Value(date),
         sessionId = Value(sessionId),
         weekNumber = Value(weekNumber),
@@ -2326,6 +2388,8 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
     Expression<bool>? completed,
     Expression<DateTime>? startedAt,
     Expression<DateTime>? completedAt,
+    Expression<int>? rpe,
+    Expression<double>? sleepHours,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2336,6 +2400,8 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
       if (completed != null) 'completed': completed,
       if (startedAt != null) 'started_at': startedAt,
       if (completedAt != null) 'completed_at': completedAt,
+      if (rpe != null) 'rpe': rpe,
+      if (sleepHours != null) 'sleep_hours': sleepHours,
     });
   }
 
@@ -2347,7 +2413,9 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
       Value<int>? phaseNumber,
       Value<bool>? completed,
       Value<DateTime?>? startedAt,
-      Value<DateTime?>? completedAt}) {
+      Value<DateTime?>? completedAt,
+      Value<int?>? rpe,
+      Value<double?>? sleepHours}) {
     return WorkoutLogsCompanion(
       id: id ?? this.id,
       date: date ?? this.date,
@@ -2357,6 +2425,8 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
       completed: completed ?? this.completed,
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
+      rpe: rpe ?? this.rpe,
+      sleepHours: sleepHours ?? this.sleepHours,
     );
   }
 
@@ -2387,6 +2457,12 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
     if (completedAt.present) {
       map['completed_at'] = Variable<DateTime>(completedAt.value);
     }
+    if (rpe.present) {
+      map['rpe'] = Variable<int>(rpe.value);
+    }
+    if (sleepHours.present) {
+      map['sleep_hours'] = Variable<double>(sleepHours.value);
+    }
     return map;
   }
 
@@ -2400,7 +2476,9 @@ class WorkoutLogsCompanion extends UpdateCompanion<WorkoutLog> {
           ..write('phaseNumber: $phaseNumber, ')
           ..write('completed: $completed, ')
           ..write('startedAt: $startedAt, ')
-          ..write('completedAt: $completedAt')
+          ..write('completedAt: $completedAt, ')
+          ..write('rpe: $rpe, ')
+          ..write('sleepHours: $sleepHours')
           ..write(')'))
         .toString();
   }
@@ -2981,9 +3059,39 @@ class $UserStateTableTable extends UserStateTable
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("onboarding_complete" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _currentWeekMeta =
+      const VerificationMeta('currentWeek');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, programStartDate, onboardingComplete];
+  late final GeneratedColumn<int> currentWeek = GeneratedColumn<int>(
+      'current_week', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _weekAnchorDateMeta =
+      const VerificationMeta('weekAnchorDate');
+  @override
+  late final GeneratedColumn<DateTime> weekAnchorDate =
+      GeneratedColumn<DateTime>('week_anchor_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _programCompleteMeta =
+      const VerificationMeta('programComplete');
+  @override
+  late final GeneratedColumn<bool> programComplete = GeneratedColumn<bool>(
+      'program_complete', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("program_complete" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        programStartDate,
+        onboardingComplete,
+        currentWeek,
+        weekAnchorDate,
+        programComplete
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3011,6 +3119,24 @@ class $UserStateTableTable extends UserStateTable
           onboardingComplete.isAcceptableOrUnknown(
               data['onboarding_complete']!, _onboardingCompleteMeta));
     }
+    if (data.containsKey('current_week')) {
+      context.handle(
+          _currentWeekMeta,
+          currentWeek.isAcceptableOrUnknown(
+              data['current_week']!, _currentWeekMeta));
+    }
+    if (data.containsKey('week_anchor_date')) {
+      context.handle(
+          _weekAnchorDateMeta,
+          weekAnchorDate.isAcceptableOrUnknown(
+              data['week_anchor_date']!, _weekAnchorDateMeta));
+    }
+    if (data.containsKey('program_complete')) {
+      context.handle(
+          _programCompleteMeta,
+          programComplete.isAcceptableOrUnknown(
+              data['program_complete']!, _programCompleteMeta));
+    }
     return context;
   }
 
@@ -3026,6 +3152,12 @@ class $UserStateTableTable extends UserStateTable
           DriftSqlType.dateTime, data['${effectivePrefix}program_start_date'])!,
       onboardingComplete: attachedDatabase.typeMapping.read(
           DriftSqlType.bool, data['${effectivePrefix}onboarding_complete'])!,
+      currentWeek: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}current_week'])!,
+      weekAnchorDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}week_anchor_date']),
+      programComplete: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}program_complete'])!,
     );
   }
 
@@ -3039,16 +3171,27 @@ class UserStateRow extends DataClass implements Insertable<UserStateRow> {
   final int id;
   final DateTime programStartDate;
   final bool onboardingComplete;
+  final int currentWeek;
+  final DateTime? weekAnchorDate;
+  final bool programComplete;
   const UserStateRow(
       {required this.id,
       required this.programStartDate,
-      required this.onboardingComplete});
+      required this.onboardingComplete,
+      required this.currentWeek,
+      this.weekAnchorDate,
+      required this.programComplete});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['program_start_date'] = Variable<DateTime>(programStartDate);
     map['onboarding_complete'] = Variable<bool>(onboardingComplete);
+    map['current_week'] = Variable<int>(currentWeek);
+    if (!nullToAbsent || weekAnchorDate != null) {
+      map['week_anchor_date'] = Variable<DateTime>(weekAnchorDate);
+    }
+    map['program_complete'] = Variable<bool>(programComplete);
     return map;
   }
 
@@ -3057,6 +3200,11 @@ class UserStateRow extends DataClass implements Insertable<UserStateRow> {
       id: Value(id),
       programStartDate: Value(programStartDate),
       onboardingComplete: Value(onboardingComplete),
+      currentWeek: Value(currentWeek),
+      weekAnchorDate: weekAnchorDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weekAnchorDate),
+      programComplete: Value(programComplete),
     );
   }
 
@@ -3067,6 +3215,9 @@ class UserStateRow extends DataClass implements Insertable<UserStateRow> {
       id: serializer.fromJson<int>(json['id']),
       programStartDate: serializer.fromJson<DateTime>(json['programStartDate']),
       onboardingComplete: serializer.fromJson<bool>(json['onboardingComplete']),
+      currentWeek: serializer.fromJson<int>(json['currentWeek']),
+      weekAnchorDate: serializer.fromJson<DateTime?>(json['weekAnchorDate']),
+      programComplete: serializer.fromJson<bool>(json['programComplete']),
     );
   }
   @override
@@ -3076,15 +3227,27 @@ class UserStateRow extends DataClass implements Insertable<UserStateRow> {
       'id': serializer.toJson<int>(id),
       'programStartDate': serializer.toJson<DateTime>(programStartDate),
       'onboardingComplete': serializer.toJson<bool>(onboardingComplete),
+      'currentWeek': serializer.toJson<int>(currentWeek),
+      'weekAnchorDate': serializer.toJson<DateTime?>(weekAnchorDate),
+      'programComplete': serializer.toJson<bool>(programComplete),
     };
   }
 
   UserStateRow copyWith(
-          {int? id, DateTime? programStartDate, bool? onboardingComplete}) =>
+          {int? id,
+          DateTime? programStartDate,
+          bool? onboardingComplete,
+          int? currentWeek,
+          Value<DateTime?> weekAnchorDate = const Value.absent(),
+          bool? programComplete}) =>
       UserStateRow(
         id: id ?? this.id,
         programStartDate: programStartDate ?? this.programStartDate,
         onboardingComplete: onboardingComplete ?? this.onboardingComplete,
+        currentWeek: currentWeek ?? this.currentWeek,
+        weekAnchorDate:
+            weekAnchorDate.present ? weekAnchorDate.value : this.weekAnchorDate,
+        programComplete: programComplete ?? this.programComplete,
       );
   UserStateRow copyWithCompanion(UserStateTableCompanion data) {
     return UserStateRow(
@@ -3095,6 +3258,14 @@ class UserStateRow extends DataClass implements Insertable<UserStateRow> {
       onboardingComplete: data.onboardingComplete.present
           ? data.onboardingComplete.value
           : this.onboardingComplete,
+      currentWeek:
+          data.currentWeek.present ? data.currentWeek.value : this.currentWeek,
+      weekAnchorDate: data.weekAnchorDate.present
+          ? data.weekAnchorDate.value
+          : this.weekAnchorDate,
+      programComplete: data.programComplete.present
+          ? data.programComplete.value
+          : this.programComplete,
     );
   }
 
@@ -3103,56 +3274,84 @@ class UserStateRow extends DataClass implements Insertable<UserStateRow> {
     return (StringBuffer('UserStateRow(')
           ..write('id: $id, ')
           ..write('programStartDate: $programStartDate, ')
-          ..write('onboardingComplete: $onboardingComplete')
+          ..write('onboardingComplete: $onboardingComplete, ')
+          ..write('currentWeek: $currentWeek, ')
+          ..write('weekAnchorDate: $weekAnchorDate, ')
+          ..write('programComplete: $programComplete')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, programStartDate, onboardingComplete);
+  int get hashCode => Object.hash(id, programStartDate, onboardingComplete,
+      currentWeek, weekAnchorDate, programComplete);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is UserStateRow &&
           other.id == this.id &&
           other.programStartDate == this.programStartDate &&
-          other.onboardingComplete == this.onboardingComplete);
+          other.onboardingComplete == this.onboardingComplete &&
+          other.currentWeek == this.currentWeek &&
+          other.weekAnchorDate == this.weekAnchorDate &&
+          other.programComplete == this.programComplete);
 }
 
 class UserStateTableCompanion extends UpdateCompanion<UserStateRow> {
   final Value<int> id;
   final Value<DateTime> programStartDate;
   final Value<bool> onboardingComplete;
+  final Value<int> currentWeek;
+  final Value<DateTime?> weekAnchorDate;
+  final Value<bool> programComplete;
   const UserStateTableCompanion({
     this.id = const Value.absent(),
     this.programStartDate = const Value.absent(),
     this.onboardingComplete = const Value.absent(),
+    this.currentWeek = const Value.absent(),
+    this.weekAnchorDate = const Value.absent(),
+    this.programComplete = const Value.absent(),
   });
   UserStateTableCompanion.insert({
     this.id = const Value.absent(),
     required DateTime programStartDate,
     this.onboardingComplete = const Value.absent(),
+    this.currentWeek = const Value.absent(),
+    this.weekAnchorDate = const Value.absent(),
+    this.programComplete = const Value.absent(),
   }) : programStartDate = Value(programStartDate);
   static Insertable<UserStateRow> custom({
     Expression<int>? id,
     Expression<DateTime>? programStartDate,
     Expression<bool>? onboardingComplete,
+    Expression<int>? currentWeek,
+    Expression<DateTime>? weekAnchorDate,
+    Expression<bool>? programComplete,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (programStartDate != null) 'program_start_date': programStartDate,
       if (onboardingComplete != null) 'onboarding_complete': onboardingComplete,
+      if (currentWeek != null) 'current_week': currentWeek,
+      if (weekAnchorDate != null) 'week_anchor_date': weekAnchorDate,
+      if (programComplete != null) 'program_complete': programComplete,
     });
   }
 
   UserStateTableCompanion copyWith(
       {Value<int>? id,
       Value<DateTime>? programStartDate,
-      Value<bool>? onboardingComplete}) {
+      Value<bool>? onboardingComplete,
+      Value<int>? currentWeek,
+      Value<DateTime?>? weekAnchorDate,
+      Value<bool>? programComplete}) {
     return UserStateTableCompanion(
       id: id ?? this.id,
       programStartDate: programStartDate ?? this.programStartDate,
       onboardingComplete: onboardingComplete ?? this.onboardingComplete,
+      currentWeek: currentWeek ?? this.currentWeek,
+      weekAnchorDate: weekAnchorDate ?? this.weekAnchorDate,
+      programComplete: programComplete ?? this.programComplete,
     );
   }
 
@@ -3168,6 +3367,15 @@ class UserStateTableCompanion extends UpdateCompanion<UserStateRow> {
     if (onboardingComplete.present) {
       map['onboarding_complete'] = Variable<bool>(onboardingComplete.value);
     }
+    if (currentWeek.present) {
+      map['current_week'] = Variable<int>(currentWeek.value);
+    }
+    if (weekAnchorDate.present) {
+      map['week_anchor_date'] = Variable<DateTime>(weekAnchorDate.value);
+    }
+    if (programComplete.present) {
+      map['program_complete'] = Variable<bool>(programComplete.value);
+    }
     return map;
   }
 
@@ -3176,7 +3384,10 @@ class UserStateTableCompanion extends UpdateCompanion<UserStateRow> {
     return (StringBuffer('UserStateTableCompanion(')
           ..write('id: $id, ')
           ..write('programStartDate: $programStartDate, ')
-          ..write('onboardingComplete: $onboardingComplete')
+          ..write('onboardingComplete: $onboardingComplete, ')
+          ..write('currentWeek: $currentWeek, ')
+          ..write('weekAnchorDate: $weekAnchorDate, ')
+          ..write('programComplete: $programComplete')
           ..write(')'))
         .toString();
   }
@@ -5606,6 +5817,8 @@ typedef $$WorkoutLogsTableCreateCompanionBuilder = WorkoutLogsCompanion
   Value<bool> completed,
   Value<DateTime?> startedAt,
   Value<DateTime?> completedAt,
+  Value<int?> rpe,
+  Value<double?> sleepHours,
 });
 typedef $$WorkoutLogsTableUpdateCompanionBuilder = WorkoutLogsCompanion
     Function({
@@ -5617,6 +5830,8 @@ typedef $$WorkoutLogsTableUpdateCompanionBuilder = WorkoutLogsCompanion
   Value<bool> completed,
   Value<DateTime?> startedAt,
   Value<DateTime?> completedAt,
+  Value<int?> rpe,
+  Value<double?> sleepHours,
 });
 
 final class $$WorkoutLogsTableReferences
@@ -5683,6 +5898,12 @@ class $$WorkoutLogsTableFilterComposer
 
   ColumnFilters<DateTime> get completedAt => $composableBuilder(
       column: $table.completedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get rpe => $composableBuilder(
+      column: $table.rpe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get sleepHours => $composableBuilder(
+      column: $table.sleepHours, builder: (column) => ColumnFilters(column));
 
   $$SessionsTableFilterComposer get sessionId {
     final $$SessionsTableFilterComposer composer = $composerBuilder(
@@ -5756,6 +5977,12 @@ class $$WorkoutLogsTableOrderingComposer
   ColumnOrderings<DateTime> get completedAt => $composableBuilder(
       column: $table.completedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get rpe => $composableBuilder(
+      column: $table.rpe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get sleepHours => $composableBuilder(
+      column: $table.sleepHours, builder: (column) => ColumnOrderings(column));
+
   $$SessionsTableOrderingComposer get sessionId {
     final $$SessionsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -5806,6 +6033,12 @@ class $$WorkoutLogsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get completedAt => $composableBuilder(
       column: $table.completedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get rpe =>
+      $composableBuilder(column: $table.rpe, builder: (column) => column);
+
+  GeneratedColumn<double> get sleepHours => $composableBuilder(
+      column: $table.sleepHours, builder: (column) => column);
 
   $$SessionsTableAnnotationComposer get sessionId {
     final $$SessionsTableAnnotationComposer composer = $composerBuilder(
@@ -5880,6 +6113,8 @@ class $$WorkoutLogsTableTableManager extends RootTableManager<
             Value<bool> completed = const Value.absent(),
             Value<DateTime?> startedAt = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
+            Value<int?> rpe = const Value.absent(),
+            Value<double?> sleepHours = const Value.absent(),
           }) =>
               WorkoutLogsCompanion(
             id: id,
@@ -5890,6 +6125,8 @@ class $$WorkoutLogsTableTableManager extends RootTableManager<
             completed: completed,
             startedAt: startedAt,
             completedAt: completedAt,
+            rpe: rpe,
+            sleepHours: sleepHours,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -5900,6 +6137,8 @@ class $$WorkoutLogsTableTableManager extends RootTableManager<
             Value<bool> completed = const Value.absent(),
             Value<DateTime?> startedAt = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
+            Value<int?> rpe = const Value.absent(),
+            Value<double?> sleepHours = const Value.absent(),
           }) =>
               WorkoutLogsCompanion.insert(
             id: id,
@@ -5910,6 +6149,8 @@ class $$WorkoutLogsTableTableManager extends RootTableManager<
             completed: completed,
             startedAt: startedAt,
             completedAt: completedAt,
+            rpe: rpe,
+            sleepHours: sleepHours,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -6408,12 +6649,18 @@ typedef $$UserStateTableTableCreateCompanionBuilder = UserStateTableCompanion
   Value<int> id,
   required DateTime programStartDate,
   Value<bool> onboardingComplete,
+  Value<int> currentWeek,
+  Value<DateTime?> weekAnchorDate,
+  Value<bool> programComplete,
 });
 typedef $$UserStateTableTableUpdateCompanionBuilder = UserStateTableCompanion
     Function({
   Value<int> id,
   Value<DateTime> programStartDate,
   Value<bool> onboardingComplete,
+  Value<int> currentWeek,
+  Value<DateTime?> weekAnchorDate,
+  Value<bool> programComplete,
 });
 
 class $$UserStateTableTableFilterComposer
@@ -6434,6 +6681,17 @@ class $$UserStateTableTableFilterComposer
 
   ColumnFilters<bool> get onboardingComplete => $composableBuilder(
       column: $table.onboardingComplete,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get currentWeek => $composableBuilder(
+      column: $table.currentWeek, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get weekAnchorDate => $composableBuilder(
+      column: $table.weekAnchorDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get programComplete => $composableBuilder(
+      column: $table.programComplete,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -6456,6 +6714,17 @@ class $$UserStateTableTableOrderingComposer
   ColumnOrderings<bool> get onboardingComplete => $composableBuilder(
       column: $table.onboardingComplete,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get currentWeek => $composableBuilder(
+      column: $table.currentWeek, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get weekAnchorDate => $composableBuilder(
+      column: $table.weekAnchorDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get programComplete => $composableBuilder(
+      column: $table.programComplete,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$UserStateTableTableAnnotationComposer
@@ -6475,6 +6744,15 @@ class $$UserStateTableTableAnnotationComposer
 
   GeneratedColumn<bool> get onboardingComplete => $composableBuilder(
       column: $table.onboardingComplete, builder: (column) => column);
+
+  GeneratedColumn<int> get currentWeek => $composableBuilder(
+      column: $table.currentWeek, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get weekAnchorDate => $composableBuilder(
+      column: $table.weekAnchorDate, builder: (column) => column);
+
+  GeneratedColumn<bool> get programComplete => $composableBuilder(
+      column: $table.programComplete, builder: (column) => column);
 }
 
 class $$UserStateTableTableTableManager extends RootTableManager<
@@ -6507,21 +6785,33 @@ class $$UserStateTableTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<DateTime> programStartDate = const Value.absent(),
             Value<bool> onboardingComplete = const Value.absent(),
+            Value<int> currentWeek = const Value.absent(),
+            Value<DateTime?> weekAnchorDate = const Value.absent(),
+            Value<bool> programComplete = const Value.absent(),
           }) =>
               UserStateTableCompanion(
             id: id,
             programStartDate: programStartDate,
             onboardingComplete: onboardingComplete,
+            currentWeek: currentWeek,
+            weekAnchorDate: weekAnchorDate,
+            programComplete: programComplete,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required DateTime programStartDate,
             Value<bool> onboardingComplete = const Value.absent(),
+            Value<int> currentWeek = const Value.absent(),
+            Value<DateTime?> weekAnchorDate = const Value.absent(),
+            Value<bool> programComplete = const Value.absent(),
           }) =>
               UserStateTableCompanion.insert(
             id: id,
             programStartDate: programStartDate,
             onboardingComplete: onboardingComplete,
+            currentWeek: currentWeek,
+            weekAnchorDate: weekAnchorDate,
+            programComplete: programComplete,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

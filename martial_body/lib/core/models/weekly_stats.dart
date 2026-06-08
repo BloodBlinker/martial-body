@@ -20,11 +20,29 @@ class WeeklyStats {
   final int sessionsCompleted;
   final double totalVolumeKg; // sum of weight × reps for all completed sets
   final int? avgDurationMinutes; // null if no startedAt/completedAt data
+  final List<SessionStats> sessionStats;
 
   const WeeklyStats({
     required this.weekNumber,
     required this.sessionsCompleted,
     required this.totalVolumeKg,
     this.avgDurationMinutes,
+    this.sessionStats = const [],
+  });
+}
+
+class SessionStats {
+  final int workoutLogId;
+  final DateTime date;
+  final double volumeKg;
+  final int? rpe;
+  final double? sleepHours;
+
+  const SessionStats({
+    required this.workoutLogId,
+    required this.date,
+    required this.volumeKg,
+    this.rpe,
+    this.sleepHours,
   });
 }

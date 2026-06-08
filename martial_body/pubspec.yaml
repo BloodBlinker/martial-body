@@ -1,7 +1,7 @@
 name: martial_body
 description: 24-week MMA preparation program — fully offline.
 publish_to: none
-version: 1.5.0+2
+version: 2.0.0+7
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -27,6 +27,10 @@ dependencies:
   share_plus: ^10.1.2
   # Keep screen on during active session — standard workout-app requirement.
   wakelock_plus: ^1.1.1
+  google_fonts: ^8.1.0
+  flutter_local_notifications: ^21.0.0
+  timezone: ^0.11.0
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -40,6 +44,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon/app_icon.png
+    - assets/images/
 
 flutter_launcher_icons:
   android: true

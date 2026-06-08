@@ -25,12 +25,19 @@ class PhaseInfo {
   final int endWeek; // inclusive
   final Set<int> deloadWeeks; // absolute week numbers
 
+  /// Training sessions scheduled per week in this phase. Phases 1–3 run a
+  /// 5-day Mon–Fri split; Phase 4 tapers to 4 days (no Thursday). Used as the
+  /// denominator for weekly-progress counters so Home, Program, and Progress
+  /// never assume a fixed "5".
+  final int sessionsPerWeek;
+
   const PhaseInfo({
     required this.number,
     required this.name,
     required this.startWeek,
     required this.endWeek,
     required this.deloadWeeks,
+    this.sessionsPerWeek = 5,
   });
 
   int get lengthWeeks => endWeek - startWeek + 1;
@@ -64,11 +71,11 @@ const kPhases = <PhaseInfo>[
     startWeek: 21,
     endWeek: 24,
     deloadWeeks: {},
+    sessionsPerWeek: 4,
   ),
 ];
 
 const int kProgramWeeks = 24;
-const int kSessionsPerPhase1 = 30; // 5 sessions/week × 6 weeks
 
 /// Week number relative to programme start. Always >= 1. Not clamped to 24
 /// at the high end so the caller can detect "programme complete".

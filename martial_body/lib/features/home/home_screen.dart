@@ -25,8 +25,10 @@ import '../../core/models/home_view_model.dart';
 import '../../core/program/phase_math.dart';
 import '../../core/providers/home_provider.dart';
 import '../../core/utils/confirm_quit_dialog.dart';
+import 'program_complete_screen.dart';
 import 'widgets/meal_plan_view.dart';
 import 'package:martial_body/core/theme/app_colors.dart';
+import 'package:martial_body/core/theme/dimensions.dart';
 
 enum _HomeSection { workout, mealPlan }
 
@@ -47,7 +49,7 @@ class HomeScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(32),
             child: Text(
-              'Could not load programme data.\n\n$e',
+              'Could not load program data.\n\n$e',
               style: TextStyle(color: context.appColors.textSecondary, height: 1.5),
               textAlign: TextAlign.center,
             ),
@@ -89,38 +91,52 @@ class _HomeBodyState extends State<_HomeBody> {
   @override
   Widget build(BuildContext context) {
     final vm = widget.vm;
+    if (vm.isProgramComplete) {
+      return ProgramCompleteScreen(vm: vm);
+    }
     return Scaffold(
       backgroundColor: context.appColors.background,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: CustomScrollView(
+              slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   _ProgramHeader(vm: vm),
-                  const SizedBox(height: 18),
+                  if (vm.missCount >= 1) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    _MissBanner(vm: vm),
+                  ],
+                  const SizedBox(height: AppSpacing.lg),
+                  _RankBanner(phaseNumber: vm.phaseNumber),
+                  const SizedBox(height: AppSpacing.xl),
                   _PhaseTabBar(
                     selected: _selectedPhase,
                     currentPhase: vm.phaseNumber,
                     onSelect: (n) => setState(() => _selectedPhase = n),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.md),
                   _SectionTabBar(
                     selected: _selectedSection,
                     onSelect: (s) => setState(() => _selectedSection = s),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.xxl),
                   _HomeContent(
                     vm: vm,
                     selectedPhase: _selectedPhase,
                     section: _selectedSection,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxxl),
                 ]),
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -388,7 +404,7 @@ class _ProgramHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Week ${vm.weekNumber}',
+                vm.isProgramComplete ? 'Complete' : 'Week ${vm.displayWeek}',
                 style: tt.headlineLarge?.copyWith(
                   color: context.appColors.textPrimary,
                   fontWeight: FontWeight.bold,
@@ -397,7 +413,9 @@ class _ProgramHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'of 24 weeks',
+                vm.isProgramComplete
+                    ? 'All 24 weeks done — keep training'
+                    : 'of 24 weeks',
                 style: tt.bodySmall?.copyWith(color: context.appColors.textSecondary),
               ),
             ],
@@ -457,6 +475,182 @@ class _PhaseBadge extends StatelessWidget {
   }
 }
 
+/// Warning when the user has missed workout days this week. One miss = amber
+/// nudge; two misses = the week is marked for reset (work no longer counts).
+class _MissBanner extends StatelessWidget {
+  final HomeViewModel vm;
+  const _MissBanner({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final failed = vm.weekFailed;
+    final color = failed ? context.appColors.error : context.appColors.deload;
+    final tt = Theme.of(context).textTheme;
+    final message = failed
+        ? "You've missed 2 workout days this week. You can still train today, "
+            "but it won't count. This week's progress will reset — you'll "
+            'restart from Monday.'
+        : "You've missed 1 workout day this week. If you miss one more, this "
+            "week's progress will be reset.";
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withAlpha(90)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(failed ? Icons.warning_amber_rounded : Icons.info_outline,
+              size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: tt.bodySmall?.copyWith(
+                color: context.appColors.textPrimary,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankBanner extends StatelessWidget {
+  final int phaseNumber;
+  const _RankBanner({required this.phaseNumber});
+
+  String _getRankName() {
+    switch (phaseNumber) {
+      case 1:
+        return 'Rank I · Dormant Form';
+      case 2:
+        return 'Rank II · Kinetic Awakened';
+      case 3:
+        return 'Rank III · Somatic Apex';
+      case 4:
+        return 'Rank IV · Absolute Synthesis';
+      default:
+        return 'Rank I · Dormant Form';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rankName = _getRankName();
+    final color = context.appColors.phaseColor(phaseNumber);
+    const roman = ['I', 'II', 'III', 'IV'];
+    // The one rank motif: a single I→IV progression strip instead of scattered
+    // "Kinesic Evolution" jargon. Each segment carries its phase colour, so the
+    // user sees their whole journey and where they stand in it. Tapping opens
+    // the full Journey map.
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/journey'),
+        borderRadius: AppRadius.cardR,
+        child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: context.appColors.surface,
+        borderRadius: AppRadius.cardR,
+        border: Border.all(color: color.withAlpha(45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.shield_outlined, color: color, size: 15),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  rankName,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                'JOURNEY',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.appColors.textSecondary,
+                      fontSize: 9,
+                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              Icon(Icons.chevron_right,
+                  size: 16, color: context.appColors.textSecondary),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: List.generate(4, (i) {
+              final n = i + 1;
+              final segColor = context.appColors.phaseColor(n);
+              final isPast = n < phaseNumber;
+              final isCurrent = n == phaseNumber;
+              final Color bg;
+              final Color fg;
+              final Color border;
+              if (isCurrent) {
+                bg = segColor.withAlpha(40);
+                fg = segColor;
+                border = segColor;
+              } else if (isPast) {
+                bg = segColor.withAlpha(22);
+                fg = segColor.withAlpha(210);
+                border = segColor.withAlpha(60);
+              } else {
+                bg = context.appColors.surfaceVariant;
+                fg = context.appColors.textSecondary;
+                border = context.appColors.divider;
+              }
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: i < 3 ? AppSpacing.sm : 0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: AppRadius.chipR,
+                      border:
+                          Border.all(color: border, width: isCurrent ? 1.2 : 1),
+                    ),
+                    child: Text(
+                      roman[i],
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: fg,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Current-phase workout content = the existing Today + This week UI.
 // ---------------------------------------------------------------------------
@@ -467,13 +661,84 @@ class _CurrentPhaseWorkout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final isRecapDay = now.weekday == DateTime.sunday || now.weekday == DateTime.monday;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (isRecapDay) ...[
+          _WeeklyRecapCard(vm: vm),
+          const SizedBox(height: 24),
+        ],
         if (vm.isRestDay) _RestDayBanner(vm: vm) else _TodayCard(vm: vm),
         const SizedBox(height: 24),
         _WeekSection(vm: vm),
       ],
+    );
+  }
+}
+
+class _WeeklyRecapCard extends StatelessWidget {
+  final HomeViewModel vm;
+  const _WeeklyRecapCard({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.appColors.phase2;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.appColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withAlpha(80)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withAlpha(20),
+            blurRadius: 20,
+            spreadRadius: -5,
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_graph, color: color, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                'WEEKLY RECAP',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            vm.completedThisWeek == 0
+                ? 'Fresh week ahead. Let\'s get the first session in.'
+                : 'You\'ve completed ${vm.completedThisWeek} '
+                    '${vm.completedThisWeek == 1 ? 'session' : 'sessions'} this week.',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.appColors.textPrimary,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Consistency is the key to Kinesic Evolution. Keep up the momentum!',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.appColors.textSecondary,
+                  height: 1.5,
+                ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -834,10 +1099,19 @@ class _TodayCard extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.appColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppRadius.cardR,
+        // Always carry a hint of gold so the day's session reads as the clear
+        // focal point of the screen, with a soft lift to set it above the rest.
         border: Border.all(
-          color: isDone ? context.appColors.gold.withAlpha(60) : context.appColors.divider,
+          color: context.appColors.gold.withAlpha(isDone ? 70 : 45),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: context.appColors.gold.withAlpha(isDone ? 28 : 16),
+            blurRadius: 24,
+            spreadRadius: -6,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -930,22 +1204,21 @@ class _TodayCard extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Text(session.focus, style: tt.bodySmall),
                 const SizedBox(height: 16),
-                Row(
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
                     _Chip(
                         icon: Icons.timer_outlined,
                         label: '~${session.estimatedMinutes} min'),
-                    const SizedBox(width: 10),
                     _Chip(
                         icon: Icons.bar_chart,
                         label:
-                            '${vm.completedThisWeek}/5 this week'),
-                    if (vm.totalCompletedSessions > 0) ...[
-                      const SizedBox(width: 10),
+                            '${vm.completedThisWeek}/${vm.sessionsPerWeek} this week'),
+                    if (vm.totalCompletedSessions > 0)
                       _Chip(
                           icon: Icons.emoji_events_outlined,
                           label: '${vm.totalCompletedSessions} total'),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 18),
@@ -1037,7 +1310,7 @@ class _WeekSection extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              '${vm.completedThisWeek} of 5 done',
+              '${vm.completedThisWeek} of ${vm.sessionsPerWeek} done',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: vm.completedThisWeek > 0
                         ? context.appColors.gold
@@ -1080,7 +1353,7 @@ class _WeekSection extends StatelessWidget {
               Text(
                 'Rest / Active Recovery',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context.appColors.textSecondary.withAlpha(140),
+                      color: context.appColors.textSecondary,
                       fontSize: 11,
                     ),
               ),
@@ -1252,7 +1525,7 @@ class _WeekendDot extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: context.appColors.textSecondary.withAlpha(140),
+              color: context.appColors.textSecondary,
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),

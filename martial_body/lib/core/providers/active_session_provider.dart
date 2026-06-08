@@ -104,8 +104,7 @@ class ActiveSessionNotifier extends StateNotifier<AsyncValue<ActiveSessionState>
           sessionStartedAt = todayLog.startedAt ?? todayLog.date;
         } else {
           final userState = await _db.userDao.getUserState();
-          final programStart = userState?.programStartDate ?? DateTime.now();
-          final weekNumber = computeWeekNumber(programStart, DateTime.now());
+          final weekNumber = userState?.currentWeek ?? 1;
           final phaseNumber = phaseNumberForWeek(weekNumber);
 
           workoutLogId = await _db.sessionDao.startSession(
@@ -351,10 +350,10 @@ class ActiveSessionNotifier extends StateNotifier<AsyncValue<ActiveSessionState>
     }
   }
 
-  Future<void> completeSession() async {
+  Future<void> completeSession(int? rpe) async {
     final current = state.value;
     if (current == null) return;
-    await _db.sessionDao.completeWorkoutLog(current.workoutLogId);
+    await _db.sessionDao.completeWorkoutLog(current.workoutLogId, rpe: rpe);
   }
 
   Future<void> uncompleteSession() async {

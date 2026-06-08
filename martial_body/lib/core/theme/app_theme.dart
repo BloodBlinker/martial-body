@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
   static ThemeData get dark {
+    final baseTextTheme = Typography.material2021().black;
+    final outFit = GoogleFonts.outfitTextTheme(baseTextTheme);
+    final inter = GoogleFonts.interTextTheme(baseTextTheme);
+    
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: appColorsDark.background,
@@ -28,7 +33,7 @@ class AppTheme {
         backgroundColor: appColorsDark.surface,
         indicatorColor: appColorsDark.phase1Muted,
         labelTextStyle: WidgetStatePropertyAll(
-          TextStyle(color: appColorsDark.textSecondary, fontSize: 12),
+          inter.labelSmall?.copyWith(color: appColorsDark.textSecondary, fontSize: 12),
         ),
         iconTheme: WidgetStatePropertyAll(
           IconThemeData(color: appColorsDark.textSecondary),
@@ -44,7 +49,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: TextStyle(
+        titleTextStyle: outFit.titleLarge?.copyWith(
           color: appColorsDark.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.bold,
@@ -52,24 +57,24 @@ class AppTheme {
         iconTheme: IconThemeData(color: appColorsDark.textPrimary),
       ),
       textTheme: TextTheme(
-        headlineLarge: TextStyle(
+        headlineLarge: outFit.headlineLarge?.copyWith(
             color: appColorsDark.textPrimary, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-        headlineMedium: TextStyle(
+        headlineMedium: outFit.headlineMedium?.copyWith(
             color: appColorsDark.textPrimary, fontWeight: FontWeight.bold, letterSpacing: -0.3),
-        headlineSmall: TextStyle(
+        headlineSmall: outFit.headlineSmall?.copyWith(
             color: appColorsDark.textPrimary, fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(
+        titleLarge: outFit.titleLarge?.copyWith(
             color: appColorsDark.textPrimary, fontWeight: FontWeight.w600),
-        titleMedium: TextStyle(color: appColorsDark.textPrimary),
-        titleSmall: TextStyle(color: appColorsDark.textSecondary),
-        bodyLarge: TextStyle(color: appColorsDark.textPrimary),
-        bodyMedium: TextStyle(color: appColorsDark.textPrimary),
-        bodySmall:
-            TextStyle(color: appColorsDark.textSecondary, fontSize: 12, height: 1.4),
-        labelLarge: TextStyle(
+        titleMedium: outFit.titleMedium?.copyWith(color: appColorsDark.textPrimary),
+        titleSmall: outFit.titleSmall?.copyWith(color: appColorsDark.textSecondary),
+        bodyLarge: inter.bodyLarge?.copyWith(color: appColorsDark.textPrimary),
+        bodyMedium: inter.bodyMedium?.copyWith(color: appColorsDark.textPrimary),
+        bodySmall: inter.bodySmall?.copyWith(
+            color: appColorsDark.textSecondary, fontSize: 12, height: 1.4),
+        labelLarge: inter.labelLarge?.copyWith(
             color: appColorsDark.textPrimary, fontWeight: FontWeight.w600),
-        labelMedium: TextStyle(color: appColorsDark.textSecondary),
-        labelSmall: TextStyle(
+        labelMedium: inter.labelMedium?.copyWith(color: appColorsDark.textSecondary),
+        labelSmall: inter.labelSmall?.copyWith(
             color: appColorsDark.textSecondary, fontSize: 11, letterSpacing: 0.3),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -80,7 +85,17 @@ class AppTheme {
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: const TextStyle(
+          textStyle: outFit.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.2),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: appColorsDark.gold,
+          foregroundColor: const Color(0xFF080808),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          textStyle: outFit.labelLarge?.copyWith(
               fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.2),
         ),
       ),
@@ -90,6 +105,9 @@ class AppTheme {
           side: BorderSide(color: appColorsDark.divider),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          textStyle: inter.labelLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -106,13 +124,17 @@ class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         hintStyle:
-            TextStyle(color: appColorsDark.textSecondary, fontSize: 14),
-        labelStyle: TextStyle(color: appColorsDark.textSecondary),
+            inter.bodyMedium?.copyWith(color: appColorsDark.textSecondary, fontSize: 14),
+        labelStyle: inter.bodyMedium?.copyWith(color: appColorsDark.textSecondary),
       ),
     );
   }
 
   static ThemeData get light {
+    final baseTextTheme = Typography.material2021().black;
+    final outFit = GoogleFonts.outfitTextTheme(baseTextTheme);
+    final inter = GoogleFonts.interTextTheme(baseTextTheme);
+
     return ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: appColorsLight.background,
@@ -137,7 +159,7 @@ class AppTheme {
         backgroundColor: appColorsLight.surface,
         indicatorColor: appColorsLight.phase1Muted,
         labelTextStyle: WidgetStatePropertyAll(
-          TextStyle(color: appColorsLight.textSecondary, fontSize: 12),
+          inter.labelSmall?.copyWith(color: appColorsLight.textSecondary, fontSize: 12),
         ),
         iconTheme: WidgetStatePropertyAll(
           IconThemeData(color: appColorsLight.textSecondary),
@@ -153,7 +175,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-        titleTextStyle: TextStyle(
+        titleTextStyle: outFit.titleLarge?.copyWith(
           color: appColorsLight.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.bold,
@@ -161,24 +183,24 @@ class AppTheme {
         iconTheme: IconThemeData(color: appColorsLight.textPrimary),
       ),
       textTheme: TextTheme(
-        headlineLarge: TextStyle(
+        headlineLarge: outFit.headlineLarge?.copyWith(
             color: appColorsLight.textPrimary, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-        headlineMedium: TextStyle(
+        headlineMedium: outFit.headlineMedium?.copyWith(
             color: appColorsLight.textPrimary, fontWeight: FontWeight.bold, letterSpacing: -0.3),
-        headlineSmall: TextStyle(
+        headlineSmall: outFit.headlineSmall?.copyWith(
             color: appColorsLight.textPrimary, fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(
+        titleLarge: outFit.titleLarge?.copyWith(
             color: appColorsLight.textPrimary, fontWeight: FontWeight.w600),
-        titleMedium: TextStyle(color: appColorsLight.textPrimary),
-        titleSmall: TextStyle(color: appColorsLight.textSecondary),
-        bodyLarge: TextStyle(color: appColorsLight.textPrimary),
-        bodyMedium: TextStyle(color: appColorsLight.textPrimary),
-        bodySmall:
-            TextStyle(color: appColorsLight.textSecondary, fontSize: 12, height: 1.4),
-        labelLarge: TextStyle(
+        titleMedium: outFit.titleMedium?.copyWith(color: appColorsLight.textPrimary),
+        titleSmall: outFit.titleSmall?.copyWith(color: appColorsLight.textSecondary),
+        bodyLarge: inter.bodyLarge?.copyWith(color: appColorsLight.textPrimary),
+        bodyMedium: inter.bodyMedium?.copyWith(color: appColorsLight.textPrimary),
+        bodySmall: inter.bodySmall?.copyWith(
+            color: appColorsLight.textSecondary, fontSize: 12, height: 1.4),
+        labelLarge: inter.labelLarge?.copyWith(
             color: appColorsLight.textPrimary, fontWeight: FontWeight.w600),
-        labelMedium: TextStyle(color: appColorsLight.textSecondary),
-        labelSmall: TextStyle(
+        labelMedium: inter.labelMedium?.copyWith(color: appColorsLight.textSecondary),
+        labelSmall: inter.labelSmall?.copyWith(
             color: appColorsLight.textSecondary, fontSize: 11, letterSpacing: 0.3),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -189,7 +211,17 @@ class AppTheme {
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: const TextStyle(
+          textStyle: outFit.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.2),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: appColorsLight.gold,
+          foregroundColor: const Color(0xFFFFFFFF),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          textStyle: outFit.labelLarge?.copyWith(
               fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.2),
         ),
       ),
@@ -199,6 +231,9 @@ class AppTheme {
           side: BorderSide(color: appColorsLight.divider),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          textStyle: inter.labelLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -215,8 +250,8 @@ class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         hintStyle:
-            TextStyle(color: appColorsLight.textSecondary, fontSize: 14),
-        labelStyle: TextStyle(color: appColorsLight.textSecondary),
+            inter.bodyMedium?.copyWith(color: appColorsLight.textSecondary, fontSize: 14),
+        labelStyle: inter.bodyMedium?.copyWith(color: appColorsLight.textSecondary),
       ),
     );
   }

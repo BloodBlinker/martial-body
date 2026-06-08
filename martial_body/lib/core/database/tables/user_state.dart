@@ -26,4 +26,13 @@ class UserStateTable extends Table {
   IntColumn get id => integer().autoIncrement()();
   DateTimeColumn get programStartDate => dateTime()();
   BoolColumn get onboardingComplete => boolean().withDefault(const Constant(false))();
+
+  // ── Completion-anchored scheduling (v1.5.4) ──
+  // The program week (1–24) advances only when a week is completed, not by the
+  // calendar. `weekAnchorDate` is the date the current week's attempt began (a
+  // Monday, except a brand-new user's Week 1 which anchors to install day).
+  IntColumn get currentWeek => integer().withDefault(const Constant(1))();
+  DateTimeColumn get weekAnchorDate => dateTime().nullable()();
+  BoolColumn get programComplete =>
+      boolean().withDefault(const Constant(false))();
 }

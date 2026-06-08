@@ -75,7 +75,7 @@ const kPhaseContent = <int, PhaseContentSpec>{
     mealPlanAvailable: true,
     workoutBlurb: 'Combat-specific strength, power, sprints, and grip work '
         'across eight weeks.',
-    mealPlanBlurb: 'Performance-optimized fuelling for high-intensity combat '
+    mealPlanBlurb: 'Performance-optimised fuelling for high-intensity combat '
         'prep and recovery.',
   ),
   4: PhaseContentSpec(

@@ -27,6 +27,15 @@ class HomeViewModel {
   final int completedThisWeek;
   final int totalCompletedSessions;
   final DateTime programStartDate;
+  /// Sessions scheduled per week in the current phase (5 for phases 1–3, 4 for
+  /// phase 4). Denominator for the "X of N this week" counters.
+  final int sessionsPerWeek;
+
+  /// Missed weekdays so far in the current week attempt (0, 1, or 2+).
+  final int missCount;
+
+  /// True once the user has finished all 24 weeks.
+  final bool programComplete;
   /// Most-recent incomplete workout log per session ID (all time, not just today).
   /// Used to surface RESUME / QUIT for any session that was left mid-workout.
   final Map<int, WorkoutLog> inProgressLogBySessionId;
@@ -41,6 +50,9 @@ class HomeViewModel {
     required this.completedThisWeek,
     required this.totalCompletedSessions,
     required this.programStartDate,
+    required this.sessionsPerWeek,
+    required this.missCount,
+    required this.programComplete,
     this.inProgressLogBySessionId = const {},
   });
 
@@ -49,6 +61,17 @@ class HomeViewModel {
       todaySession != null ? inProgressLogBySessionId[todaySession!.id] : null;
 
   bool get isRestDay => todaySession == null;
+
+  /// True once the user has finished all 24 weeks — Home switches to the
+  /// completion state instead of showing more weeks.
+  bool get isProgramComplete => programComplete;
+
+  /// The current week has failed (2+ missed weekdays) and will reset Monday.
+  /// The user may still train, but sessions no longer count.
+  bool get weekFailed => missCount >= 2;
+
+  /// Week number to display, never exceeding the programme length.
+  int get displayWeek => weekNumber > kProgramWeeks ? kProgramWeeks : weekNumber;
 
   // Delegates to phase_math so Home, Program, and Progress never disagree
   // on a phase's canonical name.

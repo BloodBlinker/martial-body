@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../core/database/database.dart';
@@ -27,7 +28,13 @@ import '../../core/models/active_session_state.dart';
 import '../../core/providers/active_session_provider.dart';
 import '../../core/providers/analytics_provider.dart';
 import '../../core/providers/database_provider.dart';
+import '../../core/models/achievement.dart';
+import '../../core/providers/journey_provider.dart';
+import '../../core/providers/records_provider.dart';
+import '../../core/providers/units_provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/units.dart';
+import 'widgets/number_pad.dart';
 
 class ActiveSessionScreen extends ConsumerStatefulWidget {
   final int sessionId;
@@ -68,13 +75,54 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   final Map<int, DateTime?> _cardioStartedAt = {};
   final Map<int, Duration> _cardioPausedElapsed = {};
 
-  // Prevent showing the weight dialog multiple times in one session.
-  bool _weightDialogShown = false;
+  // Workout-log IDs for which the pre-session dialog has already been shown.
+  // Static so it survives this screen being rebuilt/recreated on resume —
+  // resuming a session no longer re-prompts for weight/sleep.
+  static final Set<int> _weightDialogShownForLog = {};
+
+  // One-time first-run guidance, shown until the user dismisses it once.
+  bool _showFirstRunTip = false;
+  static const _kTipSeenKey = 'activeSessionTipSeen';
+
+  Future<void> _loadFirstRunTip() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool(_kTipSeenKey) ?? false) && mounted) {
+      setState(() => _showFirstRunTip = true);
+    }
+  }
+
+  Future<void> _dismissFirstRunTip() async {
+    setState(() => _showFirstRunTip = false);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kTipSeenKey, true);
+  }
+
+  UnitSystem get _unit => ref.read(unitSystemProvider);
+
+  // Weight set logs are stored in kg. The fields display the user's chosen
+  // unit, so convert at the UI⇄storage boundary.
+  String _weightDisplayFromKgText(String kgText) {
+    if (_unit == UnitSystem.metric) return kgText;
+    final kg = double.tryParse(kgText);
+    return kg == null ? kgText : Units.weightValue(kg, _unit);
+  }
+
+  String _weightKgTextFromDisplay(String displayText) {
+    if (_unit == UnitSystem.metric) return displayText;
+    final v = double.tryParse(displayText);
+    return v == null
+        ? displayText
+        : ActiveSessionNotifier.formatWeight(Units.toKg(v, _unit));
+  }
+
+  Map<String, String> _weightSnapshotToKg(Map<String, String> m) =>
+      {for (final e in m.entries) e.key: _weightKgTextFromDisplay(e.value)};
 
   @override
   void initState() {
     super.initState();
     WakelockPlus.enable();
+    _loadFirstRunTip();
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted && _sessionStartedAt != null) {
         setState(() {
@@ -124,11 +172,12 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
         // completed set for this exercise so the user sees a sane suggestion.
         final draftWeight = s.weightFor(be.blockExercise.id, i);
         final lastLog = s.lastByExerciseId[be.exercise.id];
-        final prefillWeight = draftWeight.isNotEmpty
+        final prefillWeightKg = draftWeight.isNotEmpty
             ? draftWeight
             : (lastLog?.weightKg != null
                 ? ActiveSessionNotifier.formatWeight(lastLog!.weightKg!)
                 : '');
+        final prefillWeight = _weightDisplayFromKgText(prefillWeightKg);
 
         _weightCtrl.putIfAbsent(
           k,
@@ -163,7 +212,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
         title: Text('Leave workout?',
             style: TextStyle(color: context.appColors.textPrimary)),
         content: Text(
-          'Choose how you want to leave.',
+          'Save & continue later keeps your logged sets so you can resume. '
+          'Discard deletes this workout and everything you logged in it.',
           style: TextStyle(color: context.appColors.textSecondary),
         ),
         actionsAlignment: MainAxisAlignment.start,
@@ -187,12 +237,12 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
               onPressed: () => Navigator.of(ctx).pop('later'),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Continue Later',
+                child: Text('Save & continue later',
                     style: TextStyle(color: context.appColors.textPrimary)),
               ),
             ),
           ),
-          // Exit session — delete the log entirely
+          // Discard — delete the log entirely
           SizedBox(
             width: double.infinity,
             child: TextButton(
@@ -200,7 +250,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
               style: TextButton.styleFrom(foregroundColor: context.appColors.error),
               child: const Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Exit Session'),
+                child: Text('Discard workout'),
               ),
             ),
           ),
@@ -219,14 +269,14 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
         ref.read(activeSessionProvider(widget.sessionId).notifier);
     if (choice == 'later') {
       await notifier.saveDraftsForResume(
-        weightTexts: _snapshot(_weightCtrl),
+        weightTexts: _weightSnapshotToKg(_snapshot(_weightCtrl)),
         repsTexts: _snapshot(_repsCtrl),
         rightRepsTexts: _snapshot(_rightRepsCtrl),
       );
-      if (context.mounted) context.go('/home');
+      if (mounted) context.go('/home');
     } else if (choice == 'exit') {
       await notifier.abandonSession();
-      if (context.mounted) context.go('/home');
+      if (mounted) context.go('/home');
     }
     // 'keep' → do nothing
   }
@@ -234,41 +284,44 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   /// Confirmation before completing a session — prevents accidental taps
   /// with sweaty hands from permanently locking in incomplete data.
   Future<void> _confirmComplete(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
+    final rpe = await showModalBottomSheet<int>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.appColors.surface,
-        title: Text('Complete session?',
-            style: TextStyle(color: context.appColors.textPrimary)),
-        content: Text(
-          'Any unchecked sets will be saved as-is. '
-          'You won\'t be able to resume this session later.',
-          style: TextStyle(color: context.appColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: context.appColors.gold),
-            child: const Text('Complete'),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const _RpePickerSheet(),
     );
-    if (confirmed != true || !context.mounted) return;
-    HapticFeedback.heavyImpact();
+    if (rpe == null || !context.mounted) return;
+    unawaited(HapticFeedback.heavyImpact());
     final notifier =
         ref.read(activeSessionProvider(widget.sessionId).notifier);
+
+    // Snapshot earned achievements before this session is committed so we can
+    // celebrate anything it newly unlocks.
+    Set<AchievementId> beforeUnlocked = {};
+    try {
+      beforeUnlocked = (await ref.read(journeyProvider.future)).unlocked;
+    } catch (_) {}
+
     await notifier.persistRemainingDrafts(
-      weightTexts: _snapshot(_weightCtrl),
+      weightTexts: _weightSnapshotToKg(_snapshot(_weightCtrl)),
       repsTexts: _snapshot(_repsCtrl),
       rightRepsTexts: _snapshot(_rightRepsCtrl),
     );
-    await notifier.completeSession();
+    await notifier.completeSession(rpe);
     ref.invalidate(analyticsProvider);
+    ref.invalidate(journeyProvider);
+    ref.invalidate(personalRecordsProvider);
+    ref.invalidate(maxWeightByExerciseProvider);
+
+    // Diff achievements to find anything this session just unlocked.
+    List<Achievement> newAchievements = const [];
+    try {
+      final after = await ref.read(journeyProvider.future);
+      final newlyIds = after.unlocked.difference(beforeUnlocked);
+      newAchievements =
+          kAchievements.where((a) => newlyIds.contains(a.id)).toList();
+    } catch (_) {}
+
     if (!context.mounted) return;
 
     // Compute summary stats for the celebration screen.
@@ -336,6 +389,14 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
                 ),
               ],
             ),
+            if (newAchievements.isNotEmpty) ...[
+              const SizedBox(height: 22),
+              for (final a in newAchievements)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _UnlockRow(achievement: a),
+                ),
+            ],
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -346,13 +407,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.appColors.gold,
                   foregroundColor: context.appColors.background,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                 ),
-                child: const Text('DONE',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('DONE'),
               ),
             ),
           ],
@@ -362,32 +418,34 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     if (context.mounted) context.go('/home');
   }
 
-  void _maybeShowWeightDialog(BuildContext context) {
-    // Only show once per session, and only if the dialog hasn't been shown yet.
-    if (_weightDialogShown) return;
-    _weightDialogShown = true;
+  void _maybeShowWeightDialog(BuildContext context, int workoutLogId) {
+    // Only show once per workout log — never again on resume.
+    if (_weightDialogShownForLog.contains(workoutLogId)) return;
+    _weightDialogShownForLog.add(workoutLogId);
 
     // Show the dialog asynchronously to avoid interfering with the first frame.
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!context.mounted) return;
-      _showWeightDialog(context);
+      _showPreWorkoutDialog(context);
     });
   }
 
-  Future<void> _showWeightDialog(BuildContext context) async {
+  Future<void> _showPreWorkoutDialog(BuildContext context) async {
     final weightCtrl = TextEditingController();
+    final sleepCtrl = TextEditingController();
 
-    final result = await showDialog<double?>(
+    final result = await showDialog<({double? weight, double? sleepHours})>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: context.appColors.surface,
-        title: Text('Log your weight',
+        title: Text('Pre-Session Log',
             style: TextStyle(color: context.appColors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Enter your current body weight to track your progress.',
+              'Enter your weight and sleep to map your recovery over time.',
               style: TextStyle(color: context.appColors.textSecondary),
             ),
             const SizedBox(height: 16),
@@ -398,7 +456,24 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
               decoration: InputDecoration(
-                hintText: 'e.g. 75.5 kg',
+                labelText: 'Body Weight (${Units.weightUnit(_unit)})',
+                hintText: _unit == UnitSystem.imperial ? 'e.g. 165 lb' : 'e.g. 75.5 kg',
+                hintStyle: TextStyle(color: context.appColors.textSecondary),
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              style: TextStyle(color: context.appColors.textPrimary),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: sleepCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              decoration: InputDecoration(
+                labelText: 'Sleep Duration',
+                hintText: 'e.g. 7.5 hours',
                 hintStyle: TextStyle(color: context.appColors.textSecondary),
                 border: const OutlineInputBorder(),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -415,7 +490,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
           TextButton(
             onPressed: () {
               final weight = double.tryParse(weightCtrl.text);
-              Navigator.of(ctx).pop(weight);
+              final sleepHours = double.tryParse(sleepCtrl.text);
+              Navigator.of(ctx).pop((weight: weight, sleepHours: sleepHours));
             },
             style: TextButton.styleFrom(foregroundColor: context.appColors.gold),
             child: const Text('Save'),
@@ -427,12 +503,20 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     if (result != null && context.mounted) {
       try {
         final db = ref.read(databaseProvider);
-        await db.userDao.upsertTodayWeight(result);
+        if (result.weight != null) {
+          await db.userDao.upsertTodayWeight(Units.toKg(result.weight!, _unit));
+        }
+        
+        final state = ref.read(activeSessionProvider(widget.sessionId)).valueOrNull;
+        if (result.sleepHours != null && state != null) {
+          await db.sessionDao.updateSleepDuration(state.workoutLogId, result.sleepHours!);
+        }
       } catch (e) {
-        // Silently fail — don't interrupt the workout if weight logging fails.
+        // Silently fail
       }
     }
     weightCtrl.dispose();
+    sleepCtrl.dispose();
   }
 
   @override
@@ -450,7 +534,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
       ),
       data: (s) {
         _syncControllers(s);
-        _maybeShowWeightDialog(context);
+        _maybeShowWeightDialog(context, s.workoutLogId);
         // Anchor timer to real DB startedAt (once, on first data arrival).
         _sessionStartedAt ??= s.sessionStartedAt;
         if (_sessionElapsed == Duration.zero && _sessionStartedAt != null) {
@@ -489,7 +573,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
                 ref.read(activeSessionProvider(widget.sessionId).notifier);
             if (choice == 'later') {
               await notifier.saveDraftsForResume(
-                weightTexts: _snapshot(_weightCtrl),
+                weightTexts: _weightSnapshotToKg(_snapshot(_weightCtrl)),
                 repsTexts: _snapshot(_repsCtrl),
                 rightRepsTexts: _snapshot(_rightRepsCtrl),
               );
@@ -518,18 +602,45 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
               .navigateTo(i),
           onToggleSet: (beId, setNum, restSeconds) async {
             final k = ActiveSessionState.key(beId, setNum);
+            final enteredKg = double.tryParse(
+                _weightKgTextFromDisplay(_weightCtrl[k]?.text ?? ''));
+            final exerciseId = s.currentExercise.exercise.id;
+            final priorMax =
+                ref.read(maxWeightByExerciseProvider).valueOrNull?[exerciseId];
+            // Capture context-dependent objects before the await so we never
+            // touch BuildContext across the async gap.
+            final messenger = ScaffoldMessenger.of(context);
+            final prBg = context.appColors.surfaceVariant;
             final toggledOn = await ref
                 .read(activeSessionProvider(widget.sessionId).notifier)
                 .toggleSet(
                   beId: beId,
                   setNumber: setNum,
-                  weightText: _weightCtrl[k]?.text ?? '',
+                  weightText: _weightKgTextFromDisplay(_weightCtrl[k]?.text ?? ''),
                   repsText: _repsCtrl[k]?.text ?? '',
                   rightRepsText: _rightRepsCtrl[k]?.text ?? '',
                 );
             if (!mounted) return;
             // Haptic feedback: confirm set toggle registered.
-            HapticFeedback.mediumImpact();
+            unawaited(HapticFeedback.mediumImpact());
+            // Celebrate a new personal record (only when beating a prior best).
+            if (toggledOn &&
+                enteredKg != null &&
+                priorMax != null &&
+                enteredKg > priorMax) {
+              unawaited(HapticFeedback.heavyImpact());
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text('New PR! ${Units.weight(enteredKg, _unit)}'),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: prBg,
+                ),
+              );
+            }
+            if (toggledOn && enteredKg != null) {
+              ref.invalidate(maxWeightByExerciseProvider);
+              ref.invalidate(personalRecordsProvider);
+            }
             if (toggledOn && restSeconds != null && restSeconds > 0) {
               setState(() {
                 _restStartedAt = DateTime.now();
@@ -538,6 +649,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
             }
           },
           onComplete: () => _confirmComplete(context),
+          showFirstRunTip: _showFirstRunTip,
+          onDismissFirstRunTip: _dismissFirstRunTip,
         ),
         );
       },
@@ -572,6 +685,8 @@ class _ActiveBody extends StatelessWidget {
   final void Function(int) onNavigate;
   final void Function(int beId, int setNum, int? restSeconds) onToggleSet;
   final VoidCallback onComplete;
+  final bool showFirstRunTip;
+  final VoidCallback onDismissFirstRunTip;
 
   const _ActiveBody({
     required this.s,
@@ -598,6 +713,8 @@ class _ActiveBody extends StatelessWidget {
     required this.onNavigate,
     required this.onToggleSet,
     required this.onComplete,
+    required this.showFirstRunTip,
+    required this.onDismissFirstRunTip,
   });
 
   @override
@@ -639,7 +756,10 @@ class _ActiveBody extends StatelessWidget {
       backgroundColor: context.appColors.background,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
           children: [
             _TopBar(
               session: s.sessionDetail.session,
@@ -673,6 +793,10 @@ class _ActiveBody extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
+                    if (showFirstRunTip) ...[
+                      _FirstRunTip(onDismiss: onDismissFirstRunTip),
+                      const SizedBox(height: 14),
+                    ],
                     if (be.isCardioBlock)
                       _CardioBlockCard(
                         blockId: currentBlock.id,
@@ -691,6 +815,7 @@ class _ActiveBody extends StatelessWidget {
                     else ...[
                       _ExerciseCard(
                         beId: beRow.id,
+                        exerciseId: exercise.id,
                         name: exercise.name,
                         sets: sets,
                         reps: beRow.reps,
@@ -759,6 +884,66 @@ class _ActiveBody extends StatelessWidget {
               ),
           ],
         ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+
+/// One-time guidance shown on a user's first active session, explaining the
+/// non-obvious logging gestures (tap-to-enter, tick-to-complete).
+class _FirstRunTip extends StatelessWidget {
+  final VoidCallback onDismiss;
+  const _FirstRunTip({required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = context.appColors.gold;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+      decoration: BoxDecoration(
+        color: gold.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: gold.withAlpha(80)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.lightbulb_outline, size: 18, color: gold),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'How logging works',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: context.appColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tap a weight or reps box to enter a value, then tap the ✓ to '
+                  'mark the set done. Use Next to move through exercises.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.appColors.textSecondary,
+                        height: 1.4,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: onDismiss,
+            tooltip: 'Got it',
+            visualDensity: VisualDensity.compact,
+            icon: Icon(Icons.close, size: 18, color: context.appColors.textSecondary),
+          ),
+        ],
       ),
     );
   }
@@ -964,8 +1149,9 @@ class _BlockLabel extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 
-class _ExerciseCard extends StatelessWidget {
+class _ExerciseCard extends ConsumerWidget {
   final int beId;
+  final int exerciseId;
   final String name;
   final int sets;
   final String? reps;
@@ -981,6 +1167,7 @@ class _ExerciseCard extends StatelessWidget {
 
   const _ExerciseCard({
     required this.beId,
+    required this.exerciseId,
     required this.name,
     required this.sets,
     this.reps,
@@ -996,7 +1183,9 @@ class _ExerciseCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prKg = ref.watch(maxWeightByExerciseProvider).valueOrNull?[exerciseId];
+    final unit = ref.watch(unitSystemProvider);
     return Container(
       decoration: BoxDecoration(
         color: context.appColors.surface,
@@ -1007,24 +1196,53 @@ class _ExerciseCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            name,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 16),
           Row(
             children: [
+              Expanded(
+                child: Text(
+                  name,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+              if (prKg != null) ...[
+                const SizedBox(width: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: context.appColors.gold.withAlpha(28),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.emoji_events,
+                          size: 12, color: context.appColors.gold),
+                      const SizedBox(width: 4),
+                      Text(
+                        'PR ${Units.weight(prKg, unit)}',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: context.appColors.gold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
               _StatBox(label: 'SETS', value: '$sets'),
-              if (reps != null) ...[
-                const SizedBox(width: 12),
-                _StatBox(label: 'REPS', value: reps!),
-              ],
-              if (restSeconds != null) ...[
-                const SizedBox(width: 12),
+              if (reps != null) _StatBox(label: 'REPS', value: reps!),
+              if (restSeconds != null)
                 _StatBox(label: 'REST', value: '${restSeconds}s'),
-              ],
             ],
           ),
           if (lastSet != null) ...[
@@ -1115,17 +1333,17 @@ class _ExerciseCard extends StatelessWidget {
   }
 }
 
-class _LastSetChip extends StatelessWidget {
+class _LastSetChip extends ConsumerWidget {
   final SetLog log;
   final Color accent;
   const _LastSetChip({required this.log, required this.accent});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unit = ref.watch(unitSystemProvider);
     final parts = <String>[];
     if (log.weightKg != null) {
-      final w = log.weightKg!;
-      parts.add('${w % 1 == 0 ? w.toInt() : w.toStringAsFixed(1)} kg');
+      parts.add(Units.weight(log.weightKg!, unit));
     }
     if (log.repsCompleted != null) {
       parts.add('${log.repsCompleted} reps');
@@ -1237,7 +1455,7 @@ class _TempoDisplay extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 
-class _SetLogTable extends StatelessWidget {
+class _SetLogTable extends ConsumerWidget {
   final int beId;
   final int sets;
   final int? restSeconds;
@@ -1280,7 +1498,8 @@ class _SetLogTable extends StatelessWidget {
       blockType == 'warmup' || blockType == 'cooldown';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weightUnit = Units.weightUnit(ref.watch(unitSystemProvider));
     final headerLabel = _isSimple
         ? 'Prescribed'
         : isUnilateral
@@ -1316,7 +1535,7 @@ class _SetLogTable extends StatelessWidget {
                   if (isUnilateral) ...[
                     Expanded(
                       child: Text(
-                        'Weight (kg)',
+                        'Weight ($weightUnit)',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: context.appColors.textSecondary,
                               letterSpacing: 0.8,
@@ -1346,10 +1565,22 @@ class _SetLogTable extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                     ),
+                  ] else if (isTimed) ...[
+                    // Isometric/timed hold: weight is irrelevant, log seconds only.
+                    Expanded(
+                      child: Text(
+                        'Seconds held',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: context.appColors.textSecondary,
+                              letterSpacing: 0.8,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ] else ...[
                     Expanded(
                       child: Text(
-                        'Weight (kg)',
+                        'Weight ($weightUnit)',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: context.appColors.textSecondary,
                               letterSpacing: 0.8,
@@ -1360,7 +1591,7 @@ class _SetLogTable extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        isTimed ? 'Secs' : 'Reps',
+                        'Reps',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: context.appColors.textSecondary,
                               letterSpacing: 0.8,
@@ -1439,7 +1670,6 @@ class _SetLogTable extends StatelessWidget {
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: accent.withAlpha(80)),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
               ),
@@ -1491,21 +1721,20 @@ class _SetRow extends StatelessWidget {
     required this.onToggle,
   });
 
-  static final RegExp _weightRegex = RegExp(r'^\d{0,4}(\.\d{0,1})?$');
-
-  Widget _setCircle() => Container(
+  Widget _setCircle(BuildContext context) => Container(
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: isDone ? accentMuted : AppColors.surfaceVariant,
+          color: isDone ? accentMuted : context.appColors.surfaceVariant,
           shape: BoxShape.circle,
-          border: Border.all(color: isDone ? accent : AppColors.divider),
+          border:
+              Border.all(color: isDone ? accent : context.appColors.divider),
         ),
         child: Center(
           child: Text(
             '$setNumber',
             style: TextStyle(
-              color: isDone ? accent : AppColors.textSecondary,
+              color: isDone ? accent : context.appColors.textSecondary,
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
@@ -1513,7 +1742,7 @@ class _SetRow extends StatelessWidget {
         ),
       );
 
-  Widget _doneButton() => Semantics(
+  Widget _doneButton(BuildContext context) => Semantics(
         button: true,
         toggled: isDone,
         label: isDone
@@ -1525,13 +1754,13 @@ class _SetRow extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isDone ? accent : AppColors.surfaceVariant,
+              color: isDone ? accent : context.appColors.surfaceVariant,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isDone ? accent : AppColors.divider),
+              border: Border.all(color: isDone ? accent : context.appColors.divider),
             ),
             child: Icon(
               Icons.check,
-              color: isDone ? Colors.black : AppColors.textSecondary,
+              color: isDone ? context.appColors.background : context.appColors.textSecondary,
               size: 20,
             ),
           ),
@@ -1539,9 +1768,9 @@ class _SetRow extends StatelessWidget {
       );
 
   Widget _repsField(
+    BuildContext context,
     TextEditingController ctrl,
     FocusNode focus, {
-    TextInputAction action = TextInputAction.done,
     String? semanticLabel,
   }) =>
       Semantics(
@@ -1549,19 +1778,40 @@ class _SetRow extends StatelessWidget {
         child: TextField(
           controller: ctrl,
           focusNode: focus,
-          keyboardType: TextInputType.number,
-          textInputAction: action,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(4),
-          ],
+          readOnly: true,
+          onTap: () async {
+            final result = await CustomNumberPad.show(context, ctrl.text);
+            if (result != null) ctrl.text = result;
+          },
           textAlign: TextAlign.center,
           style: TextStyle(
-              color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+              color: context.appColors.textPrimary, fontWeight: FontWeight.bold),
           decoration: const InputDecoration(
             hintText: '—',
             contentPadding: EdgeInsets.symmetric(vertical: 8),
           ),
+        ),
+      );
+
+  Widget _weightField(
+    BuildContext context,
+    TextEditingController ctrl,
+    FocusNode focus,
+  ) =>
+      TextField(
+        controller: ctrl,
+        focusNode: focus,
+        readOnly: true,
+        onTap: () async {
+          final result = await CustomNumberPad.show(context, ctrl.text);
+          if (result != null) ctrl.text = result;
+        },
+        textAlign: TextAlign.center,
+        style: TextStyle(
+            color: context.appColors.textPrimary, fontWeight: FontWeight.bold),
+        decoration: const InputDecoration(
+          hintText: '—',
+          contentPadding: EdgeInsets.symmetric(vertical: 8),
         ),
       );
 
@@ -1573,7 +1823,7 @@ class _SetRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              _setCircle(),
+              _setCircle(context),
               const SizedBox(width: 12),
               // ── Simple (warmup / cooldown): show prescribed text only ──
               if (isSimple) ...[
@@ -1591,72 +1841,32 @@ class _SetRow extends StatelessWidget {
               ]
               // ── Unilateral: weight + left reps + right reps ──
               else if (isUnilateral && weightCtrl != null && repsCtrl != null && rightRepsCtrl != null) ...[
-                Expanded(
-                  child: TextField(
-                    controller: weightCtrl,
-                    focusNode: weightFocus,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    textInputAction: TextInputAction.next,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      TextInputFormatter.withFunction((o, n) =>
-                          _weightRegex.hasMatch(n.text) ? n : o),
-                    ],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: context.appColors.textPrimary,
-                        fontWeight: FontWeight.bold),
-                    decoration: const InputDecoration(
-                      hintText: '—',
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ),
-                  ),
-                ),
+                Expanded(child: _weightField(context, weightCtrl!, weightFocus!)),
                 const SizedBox(width: 10),
-                Expanded(
-                  child: _repsField(repsCtrl!, repsFocus!,
-                      action: TextInputAction.next),
-                ),
+                Expanded(child: _repsField(context, repsCtrl!, repsFocus!)),
                 const SizedBox(width: 10),
+                Expanded(child: _repsField(context, rightRepsCtrl!, rightRepsFocus!)),
+              ]
+              // ── Timed/isometric: seconds only, no weight column ──
+              else if (isTimed && repsCtrl != null) ...[
                 Expanded(
-                  child: _repsField(rightRepsCtrl!, rightRepsFocus!),
+                  child: _repsField(
+                      context, repsCtrl!, repsFocus!,
+                      semanticLabel: 'Set $setNumber seconds held'),
                 ),
               ]
               // ── Standard: weight + reps ──
               else if (weightCtrl != null && repsCtrl != null) ...[
-                Expanded(
-                  child: TextField(
-                    controller: weightCtrl,
-                    focusNode: weightFocus,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    textInputAction: TextInputAction.next,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      TextInputFormatter.withFunction((o, n) =>
-                          _weightRegex.hasMatch(n.text) ? n : o),
-                    ],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: context.appColors.textPrimary,
-                        fontWeight: FontWeight.bold),
-                    decoration: const InputDecoration(
-                      hintText: '—',
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ),
-                  ),
-                ),
+                Expanded(child: _weightField(context, weightCtrl!, weightFocus!)),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _repsField(repsCtrl!, repsFocus!,
-                      semanticLabel: isTimed
-                          ? 'Set $setNumber seconds'
-                          : 'Set $setNumber reps'),
+                  child: _repsField(
+                      context, repsCtrl!, repsFocus!,
+                      semanticLabel: 'Set $setNumber reps'),
                 ),
               ],
               const SizedBox(width: 10),
-              _doneButton(),
+              _doneButton(context),
             ],
           ),
         ),
@@ -2080,21 +2290,6 @@ class _NavigationRow extends StatelessWidget {
               ),
           ],
         ),
-        if (isLast) ...[
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: onComplete,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: accent,
-                side: BorderSide(color: accent),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text('COMPLETE SESSION', style: TextStyle(letterSpacing: 1.2)),
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -2103,6 +2298,53 @@ class _NavigationRow extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Completion celebration helpers
 // ---------------------------------------------------------------------------
+
+class _UnlockRow extends StatelessWidget {
+  final Achievement achievement;
+  const _UnlockRow({required this.achievement});
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = context.appColors.gold;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: gold.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: gold.withAlpha(90)),
+      ),
+      child: Row(
+        children: [
+          Icon(achievement.icon, color: gold, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ACHIEVEMENT UNLOCKED',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: gold,
+                        fontSize: 9,
+                        letterSpacing: 1.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                Text(
+                  achievement.title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: context.appColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _SummaryStat extends StatelessWidget {
   final IconData icon;
@@ -2135,6 +2377,127 @@ class _SummaryStat extends StatelessWidget {
               ),
         ),
       ],
+    );
+  }
+}
+
+class _RpePickerSheet extends StatefulWidget {
+  const _RpePickerSheet();
+  @override
+  State<_RpePickerSheet> createState() => _RpePickerSheetState();
+}
+
+class _RpePickerSheetState extends State<_RpePickerSheet> {
+  int _rpe = 7;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = [
+      Colors.green,
+      Colors.green,
+      Colors.lightGreen,
+      Colors.lightGreen,
+      Colors.yellow,
+      Colors.orange,
+      Colors.deepOrange,
+      Colors.redAccent,
+      Colors.red,
+      Colors.red[900]!,
+    ];
+    final color = colors[_rpe - 1];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.appColors.background,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: context.appColors.divider),
+      ),
+      padding: const EdgeInsets.only(bottom: 32, top: 24, left: 16, right: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'How hard was that session?',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: context.appColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Rate of Perceived Exertion (RPE)',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.appColors.textSecondary,
+                ),
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withAlpha(20),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              _rpe.toString(),
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          SliderTheme(
+            data: SliderThemeData(
+              activeTrackColor: color,
+              inactiveTrackColor: context.appColors.surfaceVariant,
+              thumbColor: color,
+              overlayColor: color.withAlpha(30),
+              trackHeight: 8,
+              tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 3),
+              activeTickMarkColor: context.appColors.background.withAlpha(100),
+              inactiveTickMarkColor: context.appColors.textSecondary.withAlpha(50),
+            ),
+            child: Slider(
+              value: _rpe.toDouble(),
+              min: 1,
+              max: 10,
+              divisions: 9,
+              onChanged: (val) {
+                setState(() {
+                  _rpe = val.toInt();
+                });
+                HapticFeedback.selectionClick();
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Easy', style: TextStyle(color: context.appColors.textSecondary)),
+                Text('Max Effort', style: TextStyle(color: context.appColors.textSecondary)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.appColors.gold,
+                foregroundColor: context.appColors.background,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(_rpe);
+              },
+              child: const Text('SAVE & COMPLETE'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

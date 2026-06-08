@@ -58,25 +58,40 @@ Future<List<WeeklyStats>> _buildWeeklyStats(AppDatabase db) async {
     double totalVolume = 0.0;
     int durationSum = 0;
     int durationCount = 0;
+    final List<SessionStats> sessionStatsList = [];
 
     for (final log in weekLogs) {
       if (log.startedAt != null && log.completedAt != null) {
         durationSum += log.completedAt!.difference(log.startedAt!).inMinutes;
         durationCount++;
       }
+      
+      double sessionVolume = 0.0;
       final sets = setsByWorkout[log.id] ?? const <SetLog>[];
       for (final s in sets) {
         if (s.weightKg != null && s.repsCompleted != null) {
-          totalVolume += s.weightKg! * s.repsCompleted!;
+          sessionVolume += s.weightKg! * s.repsCompleted!;
         }
       }
+      totalVolume += sessionVolume;
+      
+      sessionStatsList.add(SessionStats(
+        workoutLogId: log.id,
+        date: log.startedAt ?? log.date,
+        volumeKg: sessionVolume,
+        rpe: log.rpe,
+        sleepHours: log.sleepHours,
+      ));
     }
+
+    sessionStatsList.sort((a, b) => a.date.compareTo(b.date));
 
     result.add(WeeklyStats(
       weekNumber: weekNum,
       sessionsCompleted: weekLogs.length,
       totalVolumeKg: totalVolume,
       avgDurationMinutes: durationCount > 0 ? durationSum ~/ durationCount : null,
+      sessionStats: sessionStatsList,
     ));
   }
 

@@ -23,7 +23,9 @@ import '../../core/export/csv_exporter.dart';
 import '../../core/models/health_metrics.dart';
 import '../../core/providers/database_provider.dart';
 import '../../core/providers/theme_provider.dart';
+import '../../core/providers/units_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
+import '../../core/utils/units.dart';
 import 'package:martial_body/core/theme/app_colors.dart';
 
 
@@ -72,6 +74,10 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
   bool _dirty = false;
   bool _saving = false;
 
+  // The unit the weight/height fields are currently displayed in. Kept in sync
+  // with the global preference; flipping it reconverts the field contents.
+  late UnitSystem _unit;
+
   // Drop trailing ".0" on whole numbers so "72.0" renders as "72".
   static String _numStr(num? v) {
     if (v == null) return '';
@@ -80,14 +86,35 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     return d % 1 == 0 ? d.toInt().toString() : d.toString();
   }
 
+  // ── Display-unit helpers (storage is always kg/cm) ──
+  String _weightDisplay(double? kg) =>
+      kg == null ? '' : Units.weightValue(kg, _unit);
+  String _heightDisplay(double? cm) => cm == null
+      ? ''
+      : (_unit == UnitSystem.imperial
+          ? Units.cmToIn(cm).round().toString()
+          : _numStr(cm));
+
+  double? _weightTextToKg() {
+    final v = double.tryParse(_weight.text);
+    return v == null ? null : Units.toKg(v, _unit);
+  }
+
+  double? _heightTextToCm() {
+    final v = double.tryParse(_height.text);
+    if (v == null) return null;
+    return _unit == UnitSystem.imperial ? Units.inToCm(v) : v;
+  }
+
   @override
   void initState() {
     super.initState();
+    _unit = ref.read(unitSystemProvider);
     final p = widget.profile;
     _name = TextEditingController(text: p?.name ?? '');
     _age = TextEditingController(text: _numStr(p?.age));
-    _weight = TextEditingController(text: _numStr(p?.weightKg));
-    _height = TextEditingController(text: _numStr(p?.heightCm));
+    _weight = TextEditingController(text: _weightDisplay(p?.weightKg));
+    _height = TextEditingController(text: _heightDisplay(p?.heightCm));
     _sex = p?.sex;
   }
 
@@ -102,8 +129,8 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     final p = widget.profile;
     _syncIfDifferent(_name, p?.name ?? '');
     _syncIfDifferent(_age, _numStr(p?.age));
-    _syncIfDifferent(_weight, _numStr(p?.weightKg));
-    _syncIfDifferent(_height, _numStr(p?.heightCm));
+    _syncIfDifferent(_weight, _weightDisplay(p?.weightKg));
+    _syncIfDifferent(_height, _heightDisplay(p?.heightCm));
     if (_sex != p?.sex) {
       _sex = p?.sex;
     }
@@ -111,6 +138,18 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
 
   void _syncIfDifferent(TextEditingController c, String next) {
     if (c.text != next) c.text = next;
+  }
+
+  /// Reconvert the weight/height field contents when the unit preference flips
+  /// (the toggle lives on this same screen).
+  void _onUnitChanged(UnitSystem next) {
+    if (next == _unit) return;
+    final kg = _weightTextToKg();
+    final cm = _heightTextToCm();
+    _unit = next;
+    _weight.text = _weightDisplay(kg);
+    _height.text = _heightDisplay(cm);
+    setState(() {});
   }
 
   @override
@@ -125,8 +164,8 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
   HealthMetrics? get _metrics => HealthMetrics.compute(
         age: int.tryParse(_age.text),
         sex: _sex,
-        weightKg: double.tryParse(_weight.text),
-        heightCm: double.tryParse(_height.text),
+        weightKg: _weightTextToKg(),
+        heightCm: _heightTextToCm(),
       );
 
   Future<void> _save() async {
@@ -138,8 +177,8 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
         name: _name.text.trim().isEmpty ? null : _name.text.trim(),
         age: int.tryParse(_age.text),
         sex: _sex,
-        weightKg: double.tryParse(_weight.text),
-        heightCm: double.tryParse(_height.text),
+        weightKg: _weightTextToKg(),
+        heightCm: _heightTextToCm(),
       );
       if (mounted) {
         setState(() => _dirty = false);
@@ -170,7 +209,11 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
 
   @override
   Widget build(BuildContext context) {
+    // Reconvert fields if the unit preference flips while we're on this screen.
+    ref.listen<UnitSystem>(unitSystemProvider, (_, next) => _onUnitChanged(next));
+    final unit = ref.watch(unitSystemProvider);
     final metrics = _metrics;
+    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
 
     return PopScope(
       canPop: !_dirty,
@@ -204,9 +247,12 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
       child: Scaffold(
       backgroundColor: context.appColors.background,
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             _buildHeader(context),
             Expanded(
               child: Form(
@@ -264,11 +310,13 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                           controller: _weight,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           style: _inputStyle,
-                          decoration: _inputDeco('kg'),
+                          decoration: _inputDeco(Units.weightUnit(unit)),
                           validator: (v) {
                             if (v == null || v.isEmpty) return null;
                             final n = double.tryParse(v);
-                            if (n == null || n < 30 || n > 300) return 'Invalid';
+                            if (n == null) return 'Invalid';
+                            final kg = Units.toKg(n, unit);
+                            if (kg < 30 || kg > 300) return 'Invalid';
                             return null;
                           },
                         ),
@@ -280,11 +328,15 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                           controller: _height,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           style: _inputStyle,
-                          decoration: _inputDeco('cm'),
+                          decoration:
+                              _inputDeco(unit == UnitSystem.imperial ? 'in' : 'cm'),
                           validator: (v) {
                             if (v == null || v.isEmpty) return null;
                             final n = double.tryParse(v);
-                            if (n == null || n < 100 || n > 250) return 'Invalid';
+                            if (n == null) return 'Invalid';
+                            final cm =
+                                unit == UnitSystem.imperial ? Units.inToCm(n) : n;
+                            if (cm < 100 || cm > 250) return 'Invalid';
                             return null;
                           },
                         ),
@@ -294,7 +346,7 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                       const SizedBox(height: 28),
                       _SectionLabel('HEALTH CALCULATIONS'),
                       const SizedBox(height: 12),
-                      _HealthPanel(metrics: metrics),
+                      _HealthPanel(metrics: metrics, unit: unit),
                     ],
                     const SizedBox(height: 28),
                     FilledButton(
@@ -325,12 +377,17 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                     _SectionLabel('APPEARANCE'),
                     const SizedBox(height: 12),
                     _InputCard(children: [
-                      _ActionRow(
-                        icon: Icons.brightness_medium_outlined,
-                        label: 'Toggle Theme Mode',
-                        onTap: () {
+                      _ThemeToggleRow(
+                        isDark: isDark,
+                        onChanged: (_) {
                           ref.read(themeModeProvider.notifier).toggleTheme();
                         },
+                      ),
+                      _divider(),
+                      _UnitsRow(
+                        unit: unit,
+                        onChanged: (u) =>
+                            ref.read(unitSystemProvider.notifier).set(u),
                       ),
                     ]),
                     const SizedBox(height: 28),
@@ -344,12 +401,6 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                       ),
                       _divider(),
                       _ActionRow(
-                        icon: Icons.event,
-                        label: 'Shift program start date',
-                        onTap: _shiftStartDate,
-                      ),
-                      _divider(),
-                      _ActionRow(
                         icon: Icons.privacy_tip_outlined,
                         label: 'Privacy policy',
                         onTap: _openPrivacyPolicy,
@@ -358,9 +409,9 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                     const SizedBox(height: 24),
                     Center(
                       child: Text(
-                        'Martial Body · v1.0.0',
+                        'Martial Body · v2.0.0',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: context.appColors.textSecondary.withAlpha(140),
+                              color: context.appColors.textSecondary,
                               letterSpacing: 0.5,
                             ),
                       ),
@@ -370,10 +421,12 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
+            ),
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -394,63 +447,6 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     }
   }
 
-  Future<void> _shiftStartDate() async {
-    final db = ref.read(databaseProvider);
-    final previousDate = (await db.userDao.getUserState())?.programStartDate ??
-        DateTime.now();
-    if (!mounted) return;
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: previousDate,
-      // A program start can only have been in the past. Cap "future" to
-      // today so users don't accidentally set week 1 to next month.
-      firstDate: now.subtract(const Duration(days: 365)),
-      lastDate: now,
-    );
-    if (picked == null || !mounted) return;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.appColors.surface,
-        title: Text('Shift start date?',
-            style: TextStyle(color: context.appColors.textPrimary)),
-        content: Text(
-          'This will recompute the current week (and phase) from '
-          '${picked.toIso8601String().split('T').first}. Existing workout '
-          'logs keep their original week numbers.',
-          style: TextStyle(color: context.appColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: context.appColors.gold),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
-    await db.userDao.updateProgramStartDate(picked);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Start date updated'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () async {
-            await db.userDao.updateProgramStartDate(previousDate);
-          },
-        ),
-        duration: const Duration(seconds: 5),
-      ),
-    );
-  }
-
   Future<void> _openPrivacyPolicy() async {
     if (!mounted) return;
     await showDialog<void>(
@@ -463,7 +459,6 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
         ),
         content: SizedBox(
           width: double.maxFinite,
-          height: 400,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,6 +622,107 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
+class _ThemeToggleRow extends StatelessWidget {
+  final bool isDark;
+  final ValueChanged<bool> onChanged;
+  const _ThemeToggleRow({required this.isDark, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        children: [
+          Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+              color: context.appColors.textSecondary, size: 20),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              isDark ? 'Dark theme' : 'Light theme',
+              style: TextStyle(color: context.appColors.textPrimary),
+            ),
+          ),
+          Switch(
+            value: isDark,
+            onChanged: onChanged,
+            // Defaults to colorScheme.primary (gold), matching the app accent.
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnitsRow extends StatelessWidget {
+  final UnitSystem unit;
+  final ValueChanged<UnitSystem> onChanged;
+  const _UnitsRow({required this.unit, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Icon(Icons.straighten, color: context.appColors.textSecondary, size: 20),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text('Units', style: TextStyle(color: context.appColors.textPrimary)),
+          ),
+          _UnitChip(
+            label: 'kg / cm',
+            selected: unit == UnitSystem.metric,
+            onTap: () => onChanged(UnitSystem.metric),
+          ),
+          const SizedBox(width: 8),
+          _UnitChip(
+            label: 'lb / in',
+            selected: unit == UnitSystem.imperial,
+            onTap: () => onChanged(UnitSystem.imperial),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnitChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _UnitChip(
+      {required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected
+              ? context.appColors.phase1Muted
+              : context.appColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? context.appColors.phase1 : context.appColors.divider,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected
+                ? context.appColors.phase1
+                : context.appColors.textSecondary,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionLabel extends StatelessWidget {
   final String text;
   const _SectionLabel(this.text);
@@ -742,7 +838,8 @@ class _Chip extends StatelessWidget {
 
 class _HealthPanel extends StatelessWidget {
   final HealthMetrics metrics;
-  const _HealthPanel({required this.metrics});
+  final UnitSystem unit;
+  const _HealthPanel({required this.metrics, required this.unit});
 
   @override
   Widget build(BuildContext context) {
@@ -754,7 +851,7 @@ class _HealthPanel extends StatelessWidget {
           rows: [
             _MetricRow('BMI', '${metrics.bmi.toStringAsFixed(1)}  ·  ${metrics.bmiCategory}'),
             _MetricRow('Body Fat', '${metrics.bodyFatPercent.toStringAsFixed(1)} %'),
-            _MetricRow('Lean Mass', '${metrics.leanBodyMass.toStringAsFixed(1)} kg'),
+            _MetricRow('Lean Mass', Units.weight(metrics.leanBodyMass, unit)),
           ],
         ),
         const SizedBox(height: 12),
@@ -772,7 +869,7 @@ class _HealthPanel extends StatelessWidget {
           title: 'Performance Targets',
           rows: [
             _MetricRow('Ideal Weight',
-                '${metrics.idealWeightMin.toStringAsFixed(1)} – ${metrics.idealWeightMax.toStringAsFixed(1)} kg'),
+                '${Units.weightValue(metrics.idealWeightMin, unit)} – ${Units.weight(metrics.idealWeightMax, unit)}'),
             _MetricRow('Daily Protein', '${metrics.proteinTargetG} g'),
             _MetricRow('Max Heart Rate', '${metrics.maxHeartRate} bpm'),
           ],

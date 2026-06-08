@@ -76,23 +76,29 @@ class _SessionBody extends StatelessWidget {
     // — it was showing the warning twice.
     return Scaffold(
       backgroundColor: context.appColors.background,
-      body: Column(
-        children: [
-          _SessionHeader(detail: detail),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, preview ? 24 : 120),
-              children: [
-                ...detail.blocks.map((b) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _BlockCard(block: b, phaseNumber: detail.phase.number),
-                    )),
-              ],
-            ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            children: [
+              _SessionHeader(detail: detail),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  children: [
+                    ...detail.blocks.map((b) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child:
+                              _BlockCard(block: b, phaseNumber: detail.phase.number),
+                        )),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-      bottomSheet: preview ? null : _StartSessionButton(sessionId: sessionId),
+      bottomNavigationBar: preview ? null : _StartSessionButton(sessionId: sessionId),
     );
   }
 }
@@ -123,6 +129,7 @@ class _SessionHeader extends StatelessWidget {
                   ? context.pop()
                   : context.go('/home'),
               icon: Icon(Icons.arrow_back, color: context.appColors.textPrimary),
+              tooltip: 'Back',
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
@@ -185,7 +192,7 @@ class _BlockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = _iconFor(block.block.blockType);
-    final iconColor = _colorFor(block.block.blockType, phaseNumber);
+    final iconColor = _colorFor(context, block.block.blockType, phaseNumber);
 
     return Container(
       decoration: BoxDecoration(
@@ -319,27 +326,28 @@ class _BlockCard extends StatelessWidget {
     }
   }
 
-  Color _colorFor(String blockType, int phaseNumber) {
-    final phaseColor = AppColors.phaseColor(phaseNumber);
+  Color _colorFor(BuildContext context, String blockType, int phaseNumber) {
+    final c = context.appColors;
+    final phaseColor = c.phaseColor(phaseNumber);
     switch (blockType) {
       case 'warmup':
-        return AppColors.textSecondary;
+        return c.textSecondary;
       case 'main':
         return phaseColor;
       case 'tendon':
-        return AppColors.deload;
+        return c.deload;
       case 'conditioning':
-        return AppColors.phase2;
+        return c.phase2;
       case 'grip':
-        return AppColors.phase3;
+        return c.phase3;
       case 'core':
-        return AppColors.phase2;
+        return c.phase2;
       case 'posterior':
         return phaseColor;
       case 'cooldown':
-        return AppColors.phase4;
+        return c.phase4;
       default:
-        return AppColors.textSecondary;
+        return c.textSecondary;
     }
   }
 }
@@ -372,14 +380,6 @@ class _StartSessionButton extends ConsumerWidget {
                     onPressed: () => context.go('/session/$sessionId/active'),
                     icon: const Icon(Icons.play_arrow_rounded, size: 22),
                     label: const Text('RESUME SESSION'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      textStyle: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -404,14 +404,6 @@ class _StartSessionButton extends ConsumerWidget {
                         onPressed: () => context.go('/session/$sessionId/active'),
                         icon: const Icon(Icons.replay, size: 20),
                         label: const Text('REDO SESSION'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          textStyle: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
                       ),
                     ),
                   ],
@@ -422,14 +414,6 @@ class _StartSessionButton extends ConsumerWidget {
                     onPressed: () => context.go('/session/$sessionId/active'),
                     icon: const Icon(Icons.play_arrow_rounded, size: 22),
                     label: const Text('START SESSION'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
                   ),
                 ),
     );

@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import '../models/home_view_model.dart';
 import '../program/phase_math.dart';
+import '../program/schedule.dart';
 import 'database_provider.dart';
 
 /// Stream-backed so the Home screen updates the moment a workout is completed
@@ -29,18 +30,20 @@ final homeProvider = StreamProvider<HomeViewModel>((ref) {
     final userState = await db.userDao.getUserState();
     // Guaranteed non-null after main.dart initialisation.
     final programStartDate = userState?.programStartDate ?? DateTime.now();
+    final weekNumber = userState?.currentWeek ?? 1;
+    final anchor = userState?.weekAnchorDate ?? programStartDate;
+    final programComplete = userState?.programComplete ?? false;
 
     final now = DateTime.now();
-    final weekNumber = computeWeekNumber(programStartDate, now);
     final phase = phaseForWeek(weekNumber);
     final isDeload = phase.deloadWeeks.contains(weekNumber);
 
     final allPhaseSessions =
         await db.programDao.getSessionsForPhase(phase.number);
 
-    // Today's session — Mon–Fri (weekday 1–5) only
+    // Today's session — Mon–Fri (weekday 1–5) only, and not once finished.
     final todayWeekday = now.weekday;
-    final todaySession = (todayWeekday >= 1 && todayWeekday <= 5)
+    final todaySession = (!programComplete && todayWeekday >= 1 && todayWeekday <= 5)
         ? await db.programDao.getSessionForDay(phase.number, todayWeekday)
         : null;
 
@@ -50,6 +53,17 @@ final homeProvider = StreamProvider<HomeViewModel>((ref) {
         .map((l) => l.sessionId)
         .toSet();
     final completedThisWeek = completedSessionIds.length;
+
+    // Missed weekdays so far this week (today never counts as a miss yet).
+    final completedDates = weekLogs
+        .where((l) => l.completed)
+        .map((l) => dateOnly(l.date))
+        .toSet();
+    final missCount = missedWeekdays(
+      anchor: anchor,
+      completedDates: completedDates,
+      cutoff: now,
+    );
 
     final totalCompletedSessions = allLogs.where((l) => l.completed).length;
 
@@ -73,6 +87,9 @@ final homeProvider = StreamProvider<HomeViewModel>((ref) {
       completedThisWeek: completedThisWeek,
       totalCompletedSessions: totalCompletedSessions,
       programStartDate: programStartDate,
+      sessionsPerWeek: phase.sessionsPerWeek,
+      missCount: missCount,
+      programComplete: programComplete,
       inProgressLogBySessionId: inProgressLogBySessionId,
     );
   });

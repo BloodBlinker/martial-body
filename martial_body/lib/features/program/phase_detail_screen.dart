@@ -43,35 +43,57 @@ class PhaseDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.appColors.background,
-      appBar: AppBar(
-        backgroundColor: context.appColors.background,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.appColors.textPrimary),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/program'),
-        ),
-        title: Text(
-          'Phase $phaseNumber',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: phaseColor,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-        ),
-      ),
       body: SafeArea(
-        top: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          children: [
-            _PhaseSummary(info: phaseInfo, phaseColor: phaseColor),
-            const SizedBox(height: 20),
-            if (!spec.workoutAvailable)
-              _ComingSoonCard(blurb: spec.workoutBlurb, phaseColor: phaseColor)
-            else
-              _SessionsList(phaseNumber: phaseNumber, phaseColor: phaseColor),
-          ],
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 8, 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back,
+                            color: context.appColors.textPrimary),
+                        tooltip: 'Back',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => context.canPop()
+                            ? context.pop()
+                            : context.go('/program'),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Phase $phaseNumber',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: phaseColor,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                    children: [
+                      _PhaseSummary(info: phaseInfo, phaseColor: phaseColor),
+                      const SizedBox(height: 20),
+                      if (!spec.workoutAvailable)
+                        _ComingSoonCard(
+                            blurb: spec.workoutBlurb, phaseColor: phaseColor)
+                      else
+                        _SessionsList(
+                            phaseNumber: phaseNumber, phaseColor: phaseColor),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

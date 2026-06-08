@@ -16,12 +16,36 @@
 
 import 'package:drift/drift.dart';
 import '../database.dart';
+import '../../models/lift_entry.dart';
 
 part 'session_dao.g.dart';
 
-@DriftAccessor(tables: [WorkoutLogs, SetLogs, BlockExercises])
+@DriftAccessor(tables: [WorkoutLogs, SetLogs, BlockExercises, Exercises])
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   SessionDao(super.db);
+
+  /// Every completed, weighted set joined to its exercise — the source data
+  /// for personal records and per-exercise progression.
+  Future<List<LiftEntry>> getCompletedLifts() async {
+    final rows = await (select(setLogs).join([
+      innerJoin(blockExercises,
+          blockExercises.id.equalsExp(setLogs.blockExerciseId)),
+      innerJoin(exercises, exercises.id.equalsExp(blockExercises.exerciseId)),
+    ])
+          ..where(setLogs.completed.equals(true) & setLogs.weightKg.isNotNull()))
+        .get();
+    return rows.map((r) {
+      final sl = r.readTable(setLogs);
+      final ex = r.readTable(exercises);
+      return LiftEntry(
+        exerciseId: ex.id,
+        exerciseName: ex.name,
+        weightKg: sl.weightKg!,
+        reps: sl.repsCompleted ?? 1,
+        date: sl.completedAt ?? DateTime.now(),
+      );
+    }).toList();
+  }
 
   Future<int> startSession({
     required int sessionId,
@@ -62,11 +86,12 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
         .getSingleOrNull();
   }
 
-  Future<void> completeWorkoutLog(int id) =>
+  Future<void> completeWorkoutLog(int id, {int? rpe}) =>
       (update(workoutLogs)..where((w) => w.id.equals(id))).write(
         WorkoutLogsCompanion(
           completed: const Value(true),
           completedAt: Value(DateTime.now()),
+          rpe: Value(rpe),
         ),
       );
 
@@ -75,6 +100,13 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
         const WorkoutLogsCompanion(
           completed: Value(false),
           completedAt: Value(null),
+        ),
+      );
+
+  Future<void> updateSleepDuration(int id, double sleepHours) =>
+      (update(workoutLogs)..where((w) => w.id.equals(id))).write(
+        WorkoutLogsCompanion(
+          sleepHours: Value(sleepHours),
         ),
       );
 
@@ -175,6 +207,24 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
 
   Future<List<WorkoutLog>> getLogsForWeek(int weekNumber) =>
       (select(workoutLogs)..where((w) => w.weekNumber.equals(weekNumber))).get();
+
+  /// Delete every workout log (and its set logs) tagged with [weekNumber].
+  /// Used when a week fails (2+ missed days) and must be redone clean.
+  Future<void> deleteLogsForWeek(int weekNumber) async {
+    final logs = await getLogsForWeek(weekNumber);
+    for (final log in logs) {
+      await (delete(setLogs)..where((s) => s.workoutLogId.equals(log.id))).go();
+    }
+    await (delete(workoutLogs)..where((w) => w.weekNumber.equals(weekNumber)))
+        .go();
+  }
+
+  /// Wipe all workout history (logs + set logs). Used by the end-of-program
+  /// "Reset and start from beginning" action. Bodyweight is handled separately.
+  Future<void> deleteAllLogs() async {
+    await delete(setLogs).go();
+    await delete(workoutLogs).go();
+  }
 
   /// Returns the most recent completed SetLog for each of [exerciseIds],
   /// optionally excluding one workoutLog (the current session) so the "last
